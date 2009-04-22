@@ -1,0 +1,10 @@
+#!/bin/bash
+
+PID_FILE=$1
+
+# Check if it's running
+
+# kill it "nicely"
+kill -15 $PID_FILE
+
+# Check if it's running

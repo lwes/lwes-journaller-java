@@ -1,0 +1,5 @@
+This is a journaller and dejournaller written in java for the Lightweight event system.
+
+You will need to install maven 2.x in order to build:
+
+% mvn clean package

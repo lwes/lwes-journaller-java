@@ -1,0 +1,32 @@
+# MetaEventInfo fields are allowed to be set in all other events, this
+# can be though of as inheritance, in other words all other events in this
+# file can have the fields defined in the MetaEventInfo
+MetaEventInfo
+{
+  ip_addr SenderIP;    # sender_ip                    REQUIRED, CALCULATED
+                       # ip address of the sender of the event
+  uint16  SenderPort;  # sender_port                  REQUIRED, CALCULATED
+                       # port of the sender of the event
+  int64   ReceiptTime; # time_received                REQUIRED, CALCULATED
+                       # time the event was received by the listener/journaller
+  uint16  SiteID;      # receiver_id                  OPTIONAL, COMMAND_ARGS
+                       # id of the listener/journaller
+  int16   enc;         # encoding_type                REQUIRED, FUNCTION_ARGS
+                       # encoding type of strings in the event
+  string  st;          # sender_type                  OPTIONAL, FUNCTION_ARGS, 10
+                       # sender type, this should be a short string which
+                       # describes the sender type.  (ie. "java", or "perl")
+}
+
+MyEvent
+{
+  string field;
+  int32 count;
+  int32 run;
+  string prog_id;
+  int32 num;
+  string k0;
+  int16 v0;
+  string k1;
+  int16 v1;
+}
