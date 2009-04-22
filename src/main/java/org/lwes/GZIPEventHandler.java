@@ -8,13 +8,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lwes.listener.EventHandler;
 
-import java.util.zip.GZIPOutputStream;
-import java.util.Calendar;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.File;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
+import java.util.Calendar;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * Write events to GzipOuputStream. When we receive a Command::Rotate event, rotate
@@ -26,6 +26,7 @@ public class GZIPEventHandler implements EventHandler {
     private Object semaphore = new Object();
 
     private String fileName;
+    private String generatedFileName;
     private GZIPOutputStream out;
 
     /**
@@ -82,6 +83,7 @@ public class GZIPEventHandler implements EventHandler {
         for (int i = 1; f.exists(); i++) {
             f = new File(fn + "-" + i + ".gz");
         }
+        setGeneratedFileName(f.getAbsolutePath());
         return f;
     }
 
@@ -198,5 +200,13 @@ public class GZIPEventHandler implements EventHandler {
 
     public void setFileName(String fileName) {
         this.fileName = fileName;
+    }
+
+    public String getGeneratedFileName() {
+        return generatedFileName;
+    }
+
+    public void setGeneratedFileName(String generatedFileName) {
+        this.generatedFileName = generatedFileName;
     }
 }
