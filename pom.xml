@@ -84,6 +84,10 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.3</version>
             </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>cobertura-maven-plugin</artifactId>               
+            </plugin>
         </plugins>
     </build>
     <repositories>
