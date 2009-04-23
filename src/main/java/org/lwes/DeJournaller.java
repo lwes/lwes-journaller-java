@@ -7,27 +7,30 @@ package org.lwes;
  * Date: Apr 16, 2009
  */
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.PosixParser;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.PosixParser;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.HelpFormatter;
-import org.lwes.serializer.DeserializerState;
 import org.lwes.db.EventTemplateDB;
+import org.lwes.serializer.Deserializer;
+import org.lwes.serializer.DeserializerState;
 
-import java.util.zip.GZIPInputStream;
+import java.io.DataInputStream;
+import java.io.EOFException;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.File;
-import java.nio.ByteBuffer;
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
+import java.util.zip.GZIPInputStream;
 
 public class DeJournaller implements Runnable {
     private transient Log log = LogFactory.getLog(DeJournaller.class);
 
-    public static final int MAX_HEADER_SIZE = 24;
+    public static final int MAX_HEADER_SIZE = 22;
     public static final int MAX_BODY_SIZE = 65513;
     public static final int MAX_MSG_SIZE = MAX_HEADER_SIZE + MAX_BODY_SIZE;
 
@@ -56,29 +59,18 @@ public class DeJournaller implements Runnable {
         }
         evtTemplate.initialize();
 
-        GZIPInputStream gzin = null;
+        DataInputStream in = null;
         try {
             byte[] headerData = new byte[MAX_HEADER_SIZE];
             byte[] eventData = new byte[MAX_BODY_SIZE];
 
-            gzin = new GZIPInputStream(new FileInputStream(fileName));
+            in = new DataInputStream(new GZIPInputStream(new FileInputStream(fileName)));
             while (true) {
                 state.reset();
+
                 // read header
-                int val = gzin.read(headerData, 0, MAX_HEADER_SIZE);
-                log.debug("read: "+val+" bytes for header");
-                // check for EOF
-                if (val == -1) {
-                    break;
-                }
-                // This is a hack. While testing this program GZIPInputStream seemed
-                // to not be smart enough to roll through the internal buffer because
-                // instead of always reading MAX_HEADER_SIZE bytes it would sometimes
-                // read less. I added this in to make sure the full header gets read in.
-                if (val < MAX_HEADER_SIZE) {
-                    val = gzin.read(headerData, val, MAX_HEADER_SIZE-val);
-                    log.debug("read: "+val+" *additional* bytes");
-                }
+                in.readFully(headerData, 0, MAX_HEADER_SIZE);
+
                 int size = 0;
                 long time = 0l;
                 int port = 0;
@@ -87,18 +79,33 @@ public class DeJournaller implements Runnable {
                 ByteBuffer buf = ByteBuffer.allocate(MAX_HEADER_SIZE);
                 buf = buf.put(headerData);
                 buf.position(0); // reset to beginning
-                size = buf.getInt();
+
+                byte[] shortBuf = new byte[2];
+                buf.get(shortBuf);
+                size = Deserializer.deserializeUINT16(state, shortBuf);                          
                 if (size < 0 || size > MAX_MSG_SIZE) {
                     // something is wrong
                     log.info("error reading header info. Size was "+size);
                     break;
                 }
+
                 time = buf.getLong();
+
                 byte[] ipbytes = new byte[4];
                 buf.get(ipbytes);
                 InetAddress ip = InetAddress.getByAddress(ipbytes);
-                port = buf.getInt();
-                siteId = buf.getInt();
+
+                state.reset();
+                buf.get(shortBuf);
+                port = Deserializer.deserializeUINT16(state, shortBuf);
+
+                state.reset();
+                buf.get(shortBuf);
+                siteId = Deserializer.deserializeUINT16(state, shortBuf);
+
+                byte[] unused = new byte[4];
+                buf.get(unused);
+                
                 if (log.isDebugEnabled()) {
                     log.debug("size: " + size);
                     log.debug("time: " + time);
@@ -106,28 +113,23 @@ public class DeJournaller implements Runnable {
                     log.debug("port: " + port);
                     log.debug("siteId: " + siteId);
                 }
-                // Now read in the event
-                val = gzin.read(eventData, 0, size);
-                if (val == -1) {
-                    log.info("Couldn't read event");
-                    break;
-                }
-                // Same hack as above.
-                if (val < size) {
-                    val = gzin.read(eventData, val, size-val);
-                    log.info("read an *additional* "+val+" bytes");
-                }
+                
+                // Now read in the event                
+                in.readFully(eventData, 0, size);
                 Event evt = new Event(eventData, false, evtTemplate);
                 handleEvent(evt);
             }
+        }
+        catch (EOFException e) {
+            // this is normal. Just catch and ignore.
         }
         catch (Exception e) {
             log.error(e.getMessage(), e);
         }
         finally {
-            if (gzin != null) {
+            if (in != null) {
                 try {
-                    gzin.close();
+                    in.close();
                 }
                 catch (IOException e) {
                     log.error(e.getMessage(), e);

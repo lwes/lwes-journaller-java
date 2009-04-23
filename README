@@ -3,3 +3,7 @@ This is a journaller and dejournaller written in java for the Lightweight event 
 You will need to install maven 2.x in order to build:
 
 % mvn clean package
+
+NOTE: To stop this journaller, you can't just control-c it or kill -9 it. If you do that, the
+Java shutdown hook may not catch the signal and the file won't get closed properly. Use the
+lwes-journaller-stop script or use kill -15.

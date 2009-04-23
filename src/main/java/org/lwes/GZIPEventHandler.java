@@ -7,6 +7,7 @@ package org.lwes;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lwes.listener.EventHandler;
+import org.lwes.serializer.Serializer;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -23,7 +24,7 @@ import java.util.zip.GZIPOutputStream;
 public class GZIPEventHandler implements EventHandler {
     private transient Log log = LogFactory.getLog(GZIPEventHandler.class);
 
-    private Object semaphore = new Object();
+    private final Object semaphore = new Object();
 
     private String fileName;
     private String generatedFileName;
@@ -37,7 +38,6 @@ public class GZIPEventHandler implements EventHandler {
      */
     public GZIPEventHandler(String file) throws IOException {
         this.fileName = file;
-
         createFileHandle(getFile());
     }
 
@@ -106,15 +106,25 @@ public class GZIPEventHandler implements EventHandler {
     }
 
     /**
-     * The header is <size of message><time><senderIp><senderport><siteId>
+     * The header is [length][time][host][port][site][unused]
+     * [length] is uint16  -- 2
+     * [time] is int64 -- 8
+     * [host] is 4 byte ip address -- 4
+     * [port] is uint16 -- 2
+     * [site] is uint16 -- 2
+     * [unused] is uint32 -- 4
      *
      * @param event Event we are writing the header for.
      * @param buf   preallocated ByteBuffer for writing the header bytes into.
      */
     private void writeHeader(Event event, ByteBuffer buf) {
         byte[] data = event.serialize();
+        // The header contains bytes reserved for expansion...
+        byte[] unused = new byte[4];
         int size = data.length;
-        log.debug("size: " + size);
+        if (log.isDebugEnabled()) {
+            log.debug("size: " + size);
+        }
         long time = System.currentTimeMillis();
 
         try {
@@ -128,11 +138,16 @@ public class GZIPEventHandler implements EventHandler {
                 // who cares
             }
 
-            buf.putInt(size)
+            byte[] shortBuf = new byte[2];
+            Serializer.serializeUINT16(size, shortBuf, 0);
+            buf.put(shortBuf)
                     .putLong(time)
-                    .put(sender.getAddress())
-                    .putInt(port)
-                    .putInt(siteId);
+                    .put(sender.getAddress());
+            Serializer.serializeUINT16(port, shortBuf, 0);
+            buf.put(shortBuf);
+            Serializer.serializeUINT16(siteId, shortBuf, 0);
+            buf.put(shortBuf)
+                    .put(unused);
 
         }
         catch (Exception e) {
@@ -150,7 +165,9 @@ public class GZIPEventHandler implements EventHandler {
      */
     public void handleEvent(Event event) {
         synchronized (semaphore) {
-            log.debug("Received event: " + event);
+            if (log.isDebugEnabled()) {
+                log.debug("Received event: " + event);
+            }
             if ("Command::Rotate".equals(event.getEventName())) {
                 try {
                     rotate();
@@ -165,9 +182,6 @@ public class GZIPEventHandler implements EventHandler {
                     writeHeader(event, b);
                     out.write(b.array(), 0, DeJournaller.MAX_HEADER_SIZE);
                     byte[] data = event.serialize();
-                    //b.put(data);
-                    // Even though we allocated size for the max length, only write to the stream
-                    // the actual length.
                     out.write(data);
                     out.flush();
                 }
@@ -182,7 +196,9 @@ public class GZIPEventHandler implements EventHandler {
      * Hook to make sure the output stream gets closed.
      */
     public void destroy() {
-        log.info("** Caught interrupt signal. Shutting down...");
+        if (log.isInfoEnabled()) {
+            log.info("** Caught interrupt signal. Shutting down...");
+        }
         synchronized (semaphore) {
             try {
                 out.flush();
