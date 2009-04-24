@@ -4,6 +4,22 @@ You will need to install maven 2.x in order to build:
 
 % mvn clean package
 
+To create the distribution package:
+
+% mvn assembly:assembly
+
+Running
+
+To start the journaller:
+% bin/lwes-journaller -m <multicast_addr> -p <multicast_port> -f <filename>
+
+To stop the journaller:
 NOTE: To stop this journaller, you can't just control-c it or kill -9 it. If you do that, the
 Java shutdown hook may not catch the signal and the file won't get closed properly. Use the
 lwes-journaller-stop script or use kill -15.
+
+% bin/lwes-journaller-stop
+
+To tell the journaller to rotate the log file (you will probably want a cron job for this):
+
+% bin/lwes-rotate-log -m <multicast_addr> -p <multicast_port>
