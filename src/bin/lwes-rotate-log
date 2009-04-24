@@ -1,9 +1,9 @@
 #!/bin/bash
 
 ##
-# Startup script for the java journaller.
+# This script calls the TestEmitter to emit a Command::Rotate event that tell the journallers
+# to rotate their log files.
 ##
-
 for jar in lib/*.jar
 do
   if [ -z $CP ]; then
@@ -17,6 +17,4 @@ CP=${CP}:config
 $JAVA_HOME/bin/java \
 -Dlog4j.configuration=log4j.xml \
 -classpath $CP \
-org.lwes.Journaller &
-
-echo $! > journaller.pid
+org.lwes.TestEmitter -r $@

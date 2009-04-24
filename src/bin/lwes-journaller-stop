@@ -1,10 +1,17 @@
 #!/bin/bash
 
-PID_FILE=$1
+##
+# Script to try and gracefully shut down the journaller. If it is not shut down
+# gracefully, the file won't be closed and likely will not be readable.
+##
+PID_FILE=${1:-journaller.pid}
+PID=`cat $PID_FILE`
 
 # Check if it's running
-
-# kill it "nicely"
-kill -15 $PID_FILE
-
-# Check if it's running
+VAL=`ps -p ${PID} -o comm=`
+if [ -z ${VAL} ]; then
+  echo "Journaller is not running"
+else
+  # kill it "nicely"
+  kill -15 $PID
+fi
