@@ -4,21 +4,19 @@ package org.lwes;
  * Date: Apr 14, 2009
  */
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.commons.cli.Options;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.PosixParser;
-import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.PosixParser;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.lwes.listener.DatagramEventListener;
 import org.lwes.listener.EventHandler;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.io.IOException;
+import java.net.InetAddress;
 
 public class Journaller implements Runnable {
     private transient Log log = LogFactory.getLog(Journaller.class);
