@@ -30,7 +30,12 @@
             <filtered>true</filtered>
         </file>
         <file>
-            <source>src/main/resources/log4j.xml</source>
+            <source>src/bin/lwes-emitter-test</source>
+            <outputDirectory>bin</outputDirectory>
+            <filtered>true</filtered>
+        </file>
+        <file>
+            <source>src/assemble/log4j.xml</source>
             <outputDirectory>config</outputDirectory>
             <filtered>true</filtered>
         </file>
