@@ -1,13 +1,14 @@
 #!/bin/bash
 
-M2=$HOME/.m2/repository
-
-CP=target/lwes-journaller-java-0.0.1.jar\
-:target/test-classes\
-:${M2}/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1.jar\
-:${M2}/commons-cli/commons-cli/1.2/commons-cli-1.2.jar\
-:${M2}/org/lwes/lwes-java/0.0.2/lwes-java-0.0.2.jar\
-:${M2}/log4j/log4j/1.2.15/log4j-1.2.15.jar
+for jar in lib/*.jar
+do
+  if [ -z $CP ]; then
+    CP=${jar}
+  else
+    CP=${CP}:${jar}
+  fi
+done
+CP=${CP}:config
 
 $JAVA_HOME/bin/java \
 -Dlog4j.configuration=log4j.xml \
