@@ -4,17 +4,16 @@ package org.lwes;
  * Date: Apr 20, 2009
  */
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.PosixParser;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.PosixParser;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.HelpFormatter;
 import org.lwes.emitter.MulticastEventEmitter;
 
 import java.net.InetAddress;
-import java.io.IOException;
 
 public class TestEmitter extends MulticastEventEmitter implements Runnable {
 
@@ -52,7 +51,7 @@ public class TestEmitter extends MulticastEventEmitter implements Runnable {
             else {
                 for (int i = 0; i < getSeconds(); i++) {
                     for (int j = 0; j < getNumber(); j++) {
-                        Event evt = createEvent("MyEvent",true);
+                        Event evt = createEvent("MyEvent", false);
                         evt.setString("field", "Testing-"+i+"-"+j);
                         evt.setInt32("count", j);
                         evt.setInt32("num", i);
