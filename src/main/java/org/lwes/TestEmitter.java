@@ -8,12 +8,14 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lwes.emitter.MulticastEventEmitter;
 
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 public class TestEmitter extends MulticastEventEmitter implements Runnable {
 
@@ -126,9 +128,14 @@ public class TestEmitter extends MulticastEventEmitter implements Runnable {
             }
             te.run();
         }
-        catch (Exception e) {
-            e.printStackTrace();
-            Runtime.getRuntime().exit(1);
+        catch (NumberFormatException e) {
+            log.error(e);
+        }
+        catch (UnknownHostException e) {
+            log.error(e);
+        }
+        catch (ParseException e) {
+            log.error(e);            
         }
     }
 

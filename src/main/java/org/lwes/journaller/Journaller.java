@@ -9,6 +9,7 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -20,7 +21,8 @@ import java.io.IOException;
 import java.net.InetAddress;
 
 public class Journaller implements Runnable {
-    private transient Log log = LogFactory.getLog(Journaller.class);
+
+    private static transient Log log = LogFactory.getLog(Journaller.class);
 
     private String fileName;
     private String multicastAddress = "224.1.1.11";
@@ -146,13 +148,24 @@ public class Journaller implements Runnable {
 
             j.run();
         }
-        catch (Exception e) {
-            e.printStackTrace();
-            Runtime.getRuntime().exit(1);
+        catch (NumberFormatException e) {
+            log.error(e);
+        }
+        catch (ParseException e) {
+            log.error(e);
+        }
+        catch (ClassNotFoundException e) {
+            log.error(e);
+        }
+        catch (IllegalAccessException e) {
+            log.error(e);
+        }
+        catch (InstantiationException e) {
+            log.error(e);
         }
     }
 
-    class ShutdownThread extends Thread {
+    static class ShutdownThread extends Thread {
 
         EventHandler eventHandler;
 
