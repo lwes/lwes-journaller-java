@@ -1,4 +1,4 @@
-package org.lwes;/**
+package org.lwes.journaller; /**
  * User: fmaritato
  * Date: Apr 22, 2009
  */
@@ -6,6 +6,10 @@ package org.lwes;/**
 import junit.framework.TestCase;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.lwes.Event;
+import org.lwes.NoSuchAttributeException;
+import org.lwes.NoSuchAttributeTypeException;
+import org.lwes.NoSuchEventException;
 import org.lwes.db.EventTemplateDB;
 
 import java.net.InetAddress;
@@ -39,7 +43,7 @@ public class GZIPEventHandlerTest extends TestCase {
             for (int i = 0; i < 10; i++) {
                 handler.handleEvent(createTestEvent());
             }
-            handler.destroy();            
+            handler.destroy();
             mdj = new MockDeJournaller();
             mdj.setFileName(generatedFile2);
             mdj.run();

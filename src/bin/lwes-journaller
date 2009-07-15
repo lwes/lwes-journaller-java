@@ -17,6 +17,6 @@ CP=${CP}:config
 $JAVA_HOME/bin/java \
 -Dlog4j.configuration=log4j.xml \
 -classpath $CP \
-org.lwes.Journaller $@ &
+org.lwes.journaller.Journaller $@ &
 
 echo $! > journaller.pid

@@ -1,4 +1,4 @@
-package org.lwes;
+package org.lwes.journaller;
 /**
  * User: fmaritato
  * Date: Apr 22, 2009
@@ -6,6 +6,7 @@ package org.lwes;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.lwes.Event;
 
 import java.util.LinkedList;
 import java.util.List;

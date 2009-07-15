@@ -1,4 +1,4 @@
-package org.lwes;
+package org.lwes.journaller;
 /**
  * User: fmaritato
  * Date: Apr 21, 2009
@@ -7,6 +7,7 @@ package org.lwes;
 import junit.framework.TestCase;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.lwes.Event;
 
 import java.util.List;
 
@@ -21,7 +22,12 @@ public class DeJournalTest extends TestCase {
 
             List<Event> eventList = m.getEventList();
             assertNotNull("EventList was null", eventList);
-            assertEquals("Wrong number of events parsed", 100, eventList.size());            
+            assertEquals("Wrong number of events parsed", 100, eventList.size());
+            for (Event e : eventList) {
+                assertEquals("Event name was wrong", "MyEvent", e.getEventName());
+                assertNotNull("SenderIP was null", e.get("SenderIP"));
+                assertNotNull("SenderPort was null", e.get("SenderPort"));
+            }
         }
         catch (Exception e) {
             log.error(e.getMessage(), e);

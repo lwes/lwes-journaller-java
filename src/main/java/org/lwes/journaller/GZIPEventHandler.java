@@ -1,4 +1,4 @@
-package org.lwes;
+package org.lwes.journaller;
 /**
  * User: fmaritato
  * Date: Apr 14, 2009
@@ -6,13 +6,13 @@ package org.lwes;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.lwes.Event;
+import org.lwes.journaller.util.EventHandlerUtil;
 import org.lwes.listener.EventHandler;
-import org.lwes.serializer.Serializer;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.Calendar;
 import java.util.zip.GZIPOutputStream;
@@ -105,56 +105,7 @@ public class GZIPEventHandler implements EventHandler {
         return str;
     }
 
-    /**
-     * The header is [length][time][host][port][site][unused]
-     * [length] is uint16  -- 2
-     * [time] is int64 -- 8
-     * [host] is 4 byte ip address -- 4
-     * [port] is uint16 -- 2
-     * [site] is uint16 -- 2
-     * [unused] is uint32 -- 4
-     *
-     * @param event Event we are writing the header for.
-     * @param buf   preallocated ByteBuffer for writing the header bytes into.
-     */
-    private void writeHeader(Event event, ByteBuffer buf) {
-        byte[] data = event.serialize();
-        // The header contains bytes reserved for expansion...
-        byte[] unused = new byte[4];
-        int size = data.length;
-        if (log.isDebugEnabled()) {
-            log.debug("size: " + size);
-        }
-        long time = System.currentTimeMillis();
 
-        try {
-            InetAddress sender = event.getInetAddress("SenderIP");
-            int port = event.getUInt16("SenderPort");
-            int siteId = 0;
-            try {
-                siteId = event.getUInt16("SiteID");
-            }
-            catch (AttributeNotSetException e) {
-                // who cares
-            }
-
-            byte[] shortBuf = new byte[2];
-            Serializer.serializeUINT16(size, shortBuf, 0);
-            buf.put(shortBuf)
-                    .putLong(time)
-                    .put(sender.getAddress());
-            Serializer.serializeUINT16(port, shortBuf, 0);
-            buf.put(shortBuf);
-            Serializer.serializeUINT16(siteId, shortBuf, 0);
-            buf.put(shortBuf)
-                    .put(unused);
-
-        }
-        catch (Exception e) {
-            log.error(e.getMessage(), e);
-        }
-
-    }
 
     /**
      * The meat of this class, called for every event captured. If the event is
@@ -179,7 +130,7 @@ public class GZIPEventHandler implements EventHandler {
             else {
                 try {
                     ByteBuffer b = ByteBuffer.allocate(DeJournaller.MAX_HEADER_SIZE);
-                    writeHeader(event, b);
+                    EventHandlerUtil.writeHeader(event, b);
                     out.write(b.array(), 0, DeJournaller.MAX_HEADER_SIZE);
                     byte[] data = event.serialize();
                     out.write(data);

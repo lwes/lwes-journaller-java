@@ -1,4 +1,4 @@
-package org.lwes;
+package org.lwes.journaller;
 /**
  * User: fmaritato
  * Date: Apr 14, 2009
@@ -12,6 +12,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.lwes.EventSystemException;
 import org.lwes.listener.DatagramEventListener;
 import org.lwes.listener.EventHandler;
 
@@ -25,6 +26,7 @@ public class Journaller implements Runnable {
     private String multicastAddress = "224.1.1.11";
     private String multicastInterface;
     private int port = 12345;
+    private int ttl = -1;
     private EventHandler eventHandler = null;
 
     private static Options options;
@@ -35,6 +37,7 @@ public class Journaller implements Runnable {
         options.addOption("m", "multicast-address", true, "Multicast address.");
         options.addOption("p", "port", true, "Multicast Port.");
         options.addOption("i", "interface", true, "Multicast Interface.");
+        options.addOption("t", "ttl", true, "Set the Time-To-Live on the socket.");
         options.addOption("h", "help", false, "Print this message.");
         options.addOption(OptionBuilder.withLongOpt("event-handler")
                 .withDescription("Fully qualified class name for event handler")
@@ -61,6 +64,9 @@ public class Journaller implements Runnable {
         }
         listener.setPort(getPort());
         listener.addHandler(eventHandler);
+        if (ttl > 0) {
+            listener.setTimeToLive(ttl);
+        }
         listener.initialize();
     }
 
@@ -126,6 +132,11 @@ public class Journaller implements Runnable {
                 j.setMulticastInterface(line.getOptionValue("i") == null ?
                                         line.getOptionValue("interface") :
                                         line.getOptionValue("i"));
+            }
+            if (line.hasOption("t") || line.hasOption("ttl")) {
+                j.setTtl(Integer.parseInt(line.getOptionValue("t") == null ?
+                                          line.getOptionValue("ttl") :
+                                          line.getOptionValue("t")));
             }
             if (line.hasOption("event-handler")) {
                 String ehName = line.getOptionValue("event-handler");
@@ -193,5 +204,13 @@ public class Journaller implements Runnable {
 
     public void setEventHandler(EventHandler eventHandler) {
         this.eventHandler = eventHandler;
+    }
+
+    public int getTtl() {
+        return ttl;
+    }
+
+    public void setTtl(int ttl) {
+        this.ttl = ttl;
     }
 }

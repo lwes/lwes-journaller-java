@@ -36,6 +36,7 @@ public class TestEmitter extends MulticastEventEmitter implements Runnable {
         options.addOption("s", "seconds", true, "Number of seconds to emit events.");
         options.addOption("b", "break", true, "Number of seconds to break between event bursts.");
         options.addOption("r", "rotate", false, "Send a Command::Rotate event.");
+        options.addOption("t", "ttl", true, "Set the time to live value on the socket");
         options.addOption("h", "help", false, "Print this message.");
     }
 
@@ -117,6 +118,11 @@ public class TestEmitter extends MulticastEventEmitter implements Runnable {
                 te.setSeconds(Integer.parseInt((line.getOptionValue("s") == null ?
                                                 line.getOptionValue("seconds") :
                                                 line.getOptionValue("s"))));
+            }
+            if (line.hasOption("t") || line.hasOption("ttl")) {
+                te.setTimeToLive(Integer.parseInt((line.getOptionValue("t") == null ?
+                                                line.getOptionValue("ttl") :
+                                                line.getOptionValue("t"))));
             }
             te.run();
         }

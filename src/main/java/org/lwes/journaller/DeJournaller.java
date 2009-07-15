@@ -1,4 +1,4 @@
-package org.lwes;
+package org.lwes.journaller;
 /**
  * A Class that will "dejournal" files written to by the GZIPEventHandler.  If you want to
  * do something other than write the events to stdout, subclass this and override handleEvent.
@@ -14,8 +14,9 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.lwes.Event;
 import org.lwes.db.EventTemplateDB;
-import org.lwes.serializer.Deserializer;
+import org.lwes.journaller.util.EventHandlerUtil;
 import org.lwes.serializer.DeserializerState;
 
 import java.io.DataInputStream;
@@ -23,16 +24,10 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.nio.ByteBuffer;
 import java.util.zip.GZIPInputStream;
 
-public class DeJournaller implements Runnable {
+public class DeJournaller implements Runnable, JournallerConstants {
     private transient Log log = LogFactory.getLog(DeJournaller.class);
-
-    public static final int MAX_HEADER_SIZE = 22;
-    public static final int MAX_BODY_SIZE = 65513;
-    public static final int MAX_MSG_SIZE = MAX_HEADER_SIZE + MAX_BODY_SIZE;
 
     private String fileName;
     private String esfFile;
@@ -51,6 +46,11 @@ public class DeJournaller implements Runnable {
 
     public void run() {
 
+        if (fileName == null || "".equals(fileName)) {
+            log.error("File name was not specified");
+            return;
+        }
+
         EventTemplateDB evtTemplate = new EventTemplateDB();
         DeserializerState state = new DeserializerState();
 
@@ -61,62 +61,12 @@ public class DeJournaller implements Runnable {
 
         DataInputStream in = null;
         try {
-            byte[] headerData = new byte[MAX_HEADER_SIZE];
-            byte[] eventData = new byte[MAX_BODY_SIZE];
-
+            log.debug("Opening file: "+fileName);
             in = new DataInputStream(new GZIPInputStream(new FileInputStream(fileName)));
-            while (true) {
+
+            Event evt;
+            while ((evt = EventHandlerUtil.readEvent(in, state, evtTemplate)) != null) {
                 state.reset();
-
-                // read header
-                in.readFully(headerData, 0, MAX_HEADER_SIZE);
-
-                int size = 0;
-                long time = 0l;
-                int port = 0;
-                int siteId = 0;
-
-                ByteBuffer buf = ByteBuffer.allocate(MAX_HEADER_SIZE);
-                buf = buf.put(headerData);
-                buf.position(0); // reset to beginning
-
-                byte[] shortBuf = new byte[2];
-                buf.get(shortBuf);
-                size = Deserializer.deserializeUINT16(state, shortBuf);                          
-                if (size < 0 || size > MAX_MSG_SIZE) {
-                    // something is wrong
-                    log.info("error reading header info. Size was "+size);
-                    break;
-                }
-
-                time = buf.getLong();
-
-                byte[] ipbytes = new byte[4];
-                buf.get(ipbytes);
-                InetAddress ip = InetAddress.getByAddress(ipbytes);
-
-                state.reset();
-                buf.get(shortBuf);
-                port = Deserializer.deserializeUINT16(state, shortBuf);
-
-                state.reset();
-                buf.get(shortBuf);
-                siteId = Deserializer.deserializeUINT16(state, shortBuf);
-
-                byte[] unused = new byte[4];
-                buf.get(unused);
-                
-                if (log.isDebugEnabled()) {
-                    log.debug("size: " + size);
-                    log.debug("time: " + time);
-                    log.debug("ip: " + ip);
-                    log.debug("port: " + port);
-                    log.debug("siteId: " + siteId);
-                }
-                
-                // Now read in the event                
-                in.readFully(eventData, 0, size);
-                Event evt = new Event(eventData, false, evtTemplate);
                 handleEvent(evt);
             }
         }

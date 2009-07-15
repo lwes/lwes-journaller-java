@@ -5,7 +5,7 @@
     <groupId>org.lwes</groupId>
     <artifactId>lwes-journaller-java</artifactId>
     <packaging>jar</packaging>
-    <version>0.0.2</version>
+    <version>0.0.3-SNAPSHOT</version>
     <name>lwes-journaller-java</name>
     <url>http://maven.apache.org</url>
     <dependencies>
@@ -23,7 +23,7 @@
         <dependency>
             <groupId>org.lwes</groupId>
             <artifactId>lwes-java</artifactId>
-            <version>0.0.2</version>
+            <version>0.0.3-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>log4j</groupId>
@@ -90,7 +90,7 @@
             </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <configuration>                   
+                <configuration>
                     <descriptors>
                         <descriptor>src/assemble/distribution.xml</descriptor>
                     </descriptors>
