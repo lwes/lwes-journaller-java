@@ -6,37 +6,44 @@
     <dependencySets>
         <dependencySet>
             <outputDirectory>/lib</outputDirectory>
+            <useProjectArtifact/>
         </dependencySet>
     </dependencySets>
     <files>
         <file>
             <source>src/bin/lwes-journaller</source>
             <outputDirectory>bin</outputDirectory>
+            <fileMode>755</fileMode>
             <filtered>true</filtered>
         </file>
         <file>
             <source>src/bin/lwes-journaller-stop</source>
             <outputDirectory>bin</outputDirectory>
+            <fileMode>755</fileMode>
             <filtered>true</filtered>
         </file>
         <file>
             <source>src/bin/lwes-rotate-log</source>
             <outputDirectory>bin</outputDirectory>
+            <fileMode>755</fileMode>
             <filtered>true</filtered>
         </file>
         <file>
             <source>src/bin/lwes-dejournaller</source>
             <outputDirectory>bin</outputDirectory>
+            <fileMode>755</fileMode>
             <filtered>true</filtered>
         </file>
         <file>
             <source>src/bin/lwes-emitter-test</source>
             <outputDirectory>bin</outputDirectory>
+            <fileMode>755</fileMode>
             <filtered>true</filtered>
         </file>
         <file>
             <source>src/assemble/log4j.xml</source>
             <outputDirectory>config</outputDirectory>
+            <fileMode>644</fileMode>
             <filtered>true</filtered>
         </file>
     </files>
