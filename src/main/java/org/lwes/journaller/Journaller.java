@@ -7,13 +7,15 @@ package org.lwes.journaller;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lwes.EventSystemException;
+import org.lwes.journaller.handler.AbstractFileEventHandler;
+import org.lwes.journaller.handler.GZIPEventHandler;
+import org.lwes.journaller.handler.NIOEventHandler;
 import org.lwes.listener.DatagramEventListener;
 import org.lwes.listener.EventHandler;
 
@@ -28,8 +30,10 @@ public class Journaller implements Runnable {
     private String multicastAddress = "224.1.1.11";
     private String multicastInterface;
     private int port = 12345;
-    private int ttl = -1;
+    private int ttl = 1;
     private EventHandler eventHandler = null;
+    private DatagramEventListener listener = null;
+    private boolean useGzip = false;
 
     private static Options options;
 
@@ -41,25 +45,25 @@ public class Journaller implements Runnable {
         options.addOption("i", "interface", true, "Multicast Interface.");
         options.addOption("t", "ttl", true, "Set the Time-To-Live on the socket.");
         options.addOption("h", "help", false, "Print this message.");
-        options.addOption(OptionBuilder.withLongOpt("event-handler")
-                .withDescription("Fully qualified class name for event handler")
-                .hasArg()
-                .create());
+        options.addOption(null, "gzip", false, "Use the gzip event handler. NIO is used by default.");
     }
 
     public Journaller() {
     }
 
     public void initialize() throws EventSystemException, IOException {
-        if (eventHandler == null) {
+        if (useGzip) {
             eventHandler = new GZIPEventHandler(getFileName());
+        }
+        else {
+            eventHandler = new NIOEventHandler(getFileName());
         }
         InetAddress address = InetAddress.getByName(getMulticastAddress());
         InetAddress iface = null;
         if (getMulticastInterface() != null) {
             iface = InetAddress.getByName(getMulticastInterface());
         }
-        DatagramEventListener listener = new DatagramEventListener();
+        listener = new DatagramEventListener();
         listener.setAddress(address);
         if (iface != null) {
             listener.setInterface(iface);
@@ -80,12 +84,12 @@ public class Journaller implements Runnable {
             // Add a shutdown hook in case of kill or ^c
             Runtime.getRuntime().addShutdownHook(new ShutdownThread(eventHandler));
 
-            if (log.isDebugEnabled()) {
-                log.debug("LWES Journaller");
-                log.debug("Multicast Address: " + getMulticastAddress());
-                log.debug("Multicast Interface: " + getMulticastInterface());
-                log.debug("Multicast Port: " + getPort());
-                log.debug("Using event hander: " + getEventHandler().getClass().getName());
+            if (log.isInfoEnabled()) {
+                log.info("LWES Journaller");
+                log.info("Multicast Address: " + getMulticastAddress());
+                log.info("Multicast Interface: " + getMulticastInterface());
+                log.info("Multicast Port: " + getPort());
+                log.info("Using event hander: " + getEventHandler().getClass().getName());
             }
 
             // keep this thread busy
@@ -140,10 +144,8 @@ public class Journaller implements Runnable {
                                           line.getOptionValue("ttl") :
                                           line.getOptionValue("t")));
             }
-            if (line.hasOption("event-handler")) {
-                String ehName = line.getOptionValue("event-handler");
-                Class classdef = Class.forName(ehName);
-                j.setEventHandler((EventHandler) classdef.newInstance());
+            if (line.hasOption("gzip")) {
+                j.setUseGzip(true);
             }
 
             j.run();
@@ -152,15 +154,6 @@ public class Journaller implements Runnable {
             log.error(e);
         }
         catch (ParseException e) {
-            log.error(e);
-        }
-        catch (ClassNotFoundException e) {
-            log.error(e);
-        }
-        catch (IllegalAccessException e) {
-            log.error(e);
-        }
-        catch (InstantiationException e) {
             log.error(e);
         }
     }
@@ -177,6 +170,14 @@ public class Journaller implements Runnable {
             log.debug("shutdown thread run()");
             eventHandler.destroy();
         }
+    }
+
+    public boolean isUseGzip() {
+        return useGzip;
+    }
+
+    public void setUseGzip(boolean useGzip) {
+        this.useGzip = useGzip;
     }
 
     public String getFileName() {
@@ -215,7 +216,7 @@ public class Journaller implements Runnable {
         return eventHandler;
     }
 
-    public void setEventHandler(EventHandler eventHandler) {
+    public void setEventHandler(AbstractFileEventHandler eventHandler) {
         this.eventHandler = eventHandler;
     }
 

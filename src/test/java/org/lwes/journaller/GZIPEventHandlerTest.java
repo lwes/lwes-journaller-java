@@ -11,6 +11,7 @@ import org.lwes.NoSuchAttributeException;
 import org.lwes.NoSuchAttributeTypeException;
 import org.lwes.NoSuchEventException;
 import org.lwes.db.EventTemplateDB;
+import org.lwes.journaller.handler.GZIPEventHandler;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -27,25 +28,27 @@ public class GZIPEventHandlerTest extends TestCase {
     public void testHandler() {
         try {
             GZIPEventHandler handler = new GZIPEventHandler("target/junit");
-            String generatedFile1 = handler.getGeneratedFileName();
+            String generatedFile1 = handler.getGeneratedFilename();
             for (int i = 0; i < 10; i++) {
                 handler.handleEvent(createTestEvent());
             }
             handler.handleEvent(createRotateEvent());
             MockDeJournaller mdj = new MockDeJournaller();
             mdj.setFileName(generatedFile1);
+            mdj.setGzipped(true);
             mdj.run();
             List<Event> eventList = mdj.getEventList();
             assertNotNull("Event list was null", eventList);
             assertEquals("Number of events is wrong", 10, eventList.size());
 
-            String generatedFile2 = handler.getGeneratedFileName();
+            String generatedFile2 = handler.getGeneratedFilename();
             for (int i = 0; i < 10; i++) {
                 handler.handleEvent(createTestEvent());
             }
             handler.destroy();
             mdj = new MockDeJournaller();
             mdj.setFileName(generatedFile2);
+            mdj.setGzipped(true);
             mdj.run();
             eventList = mdj.getEventList();
             assertNotNull("Event list was null", eventList);

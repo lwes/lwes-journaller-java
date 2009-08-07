@@ -18,6 +18,7 @@ public class DeJournalTest extends TestCase {
         try {
             MockDeJournaller m = new MockDeJournaller();
             m.setFileName("src/test/resources/test.gz");
+            m.setGzipped(true);
             m.run();
 
             List<Event> eventList = m.getEventList();
