@@ -1,0 +1,17 @@
+#!/bin/bash
+
+for jar in lib/*.jar
+do
+  if [ -z $CP ]; then
+    CP=${jar}
+  else
+    CP=${CP}:${jar}
+  fi
+done
+CP=${CP}:config
+
+
+$JAVA_HOME/bin/java \
+-Dlog4j.configuration=log4j.xml \
+-classpath $CP \
+org.lwes.journaller.CountDeJournaller $@
