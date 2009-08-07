@@ -29,6 +29,7 @@ import java.util.zip.GZIPInputStream;
 public class DeJournaller implements Runnable, JournallerConstants {
     private transient Log log = LogFactory.getLog(DeJournaller.class);
 
+    private boolean gzipped;
     private String fileName;
     private String esfFile;
 
@@ -39,6 +40,7 @@ public class DeJournaller implements Runnable, JournallerConstants {
         options.addOption("f", "file", true, "File to read events from.");
         options.addOption("e", "esf-file", true, "Event definition file.");
         options.addOption("h", "help", false, "Print this message.");
+        options.addOption("g", "gzipped", false, "Event log is gzipped.");
     }
 
     public DeJournaller() {
@@ -61,9 +63,13 @@ public class DeJournaller implements Runnable, JournallerConstants {
 
         DataInputStream in = null;
         try {
-            log.debug("Opening file: "+fileName);
-            in = new DataInputStream(new GZIPInputStream(new FileInputStream(fileName)));
-
+            log.debug("Opening file: " + fileName);
+            if (gzipped) {
+                in = new DataInputStream(new GZIPInputStream(new FileInputStream(fileName)));
+            }
+            else {
+                in = new DataInputStream(new FileInputStream(fileName));
+            }
             Event evt;
             while ((evt = EventHandlerUtil.readEvent(in, state, evtTemplate)) != null) {
                 state.reset();
@@ -124,6 +130,9 @@ public class DeJournaller implements Runnable, JournallerConstants {
                               line.getOptionValue("esf-file") :
                               line.getOptionValue("e"));
             }
+            if (line.hasOption("g") || line.hasOption("gzipped")) {
+                dj.setGzipped(true);
+            }
 
             dj.run();
         }
@@ -147,5 +156,13 @@ public class DeJournaller implements Runnable, JournallerConstants {
 
     public void setEsfFile(String esfFile) {
         this.esfFile = esfFile;
+    }
+
+    public boolean isGzipped() {
+        return gzipped;
+    }
+
+    public void setGzipped(boolean gzipped) {
+        this.gzipped = gzipped;
     }
 }
