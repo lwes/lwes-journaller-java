@@ -3,6 +3,13 @@
 
 <log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/" debug="false">
 
+    <appender name="CONSOLE" class="org.apache.log4j.ConsoleAppender">
+        <param name="Target" value="System.out"/>
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%d{ABSOLUTE} %-5p [%c] %m%n"/>
+        </layout>
+    </appender>
+
     <appender name="FILE" class="org.apache.log4j.DailyRollingFileAppender">
         <errorHandler class="org.apache.log4j.helpers.OnlyOnceErrorHandler"/>
         <param name="File" value="logs/journaller.log"/>
@@ -12,6 +19,11 @@
             <param name="ConversionPattern" value="%d %-5p [%c] %m%n"/>
         </layout>
     </appender>
+
+    <category name="org.lwes.journaller.CountDeJournaller">
+        <priority value="INFO"/>
+        <appender-ref ref="CONSOLE"/>
+    </category>
 
     <root>
         <priority value="INFO"/>
