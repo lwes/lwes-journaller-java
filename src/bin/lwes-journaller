@@ -1,5 +1,7 @@
 #!/bin/bash
 
+JAVA_OPTS=${JAVA_OPTS:-"-XX:+UseParallelGC -Xms512m -Xmx512m -ea -server"}
+
 ##
 # Startup script for the java journaller.
 ##
@@ -15,6 +17,7 @@ done
 CP=${CP}:config
 
 $JAVA_HOME/bin/java \
+$JAVA_OPTS \
 -Dlog4j.configuration=log4j.xml \
 -classpath $CP \
 org.lwes.journaller.Journaller $@ &
