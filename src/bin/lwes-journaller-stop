@@ -14,4 +14,7 @@ if [ -z ${VAL} ]; then
 else
   # kill it "nicely"
   kill -15 $PID
+  if [ "$?" = "0" ]; then
+    rm $PID_FILE
+  fi
 fi
