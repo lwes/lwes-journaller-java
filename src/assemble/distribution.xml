@@ -14,7 +14,17 @@
             <directory>src/bin</directory>
             <outputDirectory>bin</outputDirectory>
             <fileMode>755</fileMode>
-            <filtered>true</filtered>            
+            <filtered>true</filtered>
+        </fileSet>
+
+        <fileSet>
+            <directory>src/main/resources</directory>
+            <outputDirectory>config</outputDirectory>
+            <fileMode>644</fileMode>
+            <filtered>true</filtered>
+            <includes>
+                <include>log4j.xml</include>
+            </includes>
         </fileSet>
     </fileSets>
 </assembly>
