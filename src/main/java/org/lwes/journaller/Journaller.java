@@ -158,7 +158,7 @@ public class Journaller implements Runnable {
         }
     }
 
-    static class ShutdownThread extends Thread {
+    class ShutdownThread extends Thread {
 
         EventHandler eventHandler;
 
@@ -169,6 +169,12 @@ public class Journaller implements Runnable {
         public void run() {
             log.debug("shutdown thread run()");
             eventHandler.destroy();
+            try {
+                listener.shutdown();
+            }
+            catch (EventSystemException e) {
+                log.error(e.getMessage(), e);
+            }
         }
     }
 
