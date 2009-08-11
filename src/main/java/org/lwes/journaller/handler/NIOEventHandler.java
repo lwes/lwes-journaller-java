@@ -8,10 +8,12 @@ import org.apache.commons.logging.LogFactory;
 import org.lwes.Event;
 import org.lwes.journaller.DeJournaller;
 import org.lwes.journaller.util.EventHandlerUtil;
+import org.lwes.listener.DatagramQueueElement;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.DatagramPacket;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
@@ -57,6 +59,32 @@ public class NIOEventHandler extends AbstractFileEventHandler {
             }
             catch (IOException e) {
                 log.error(e.getMessage(), e);
+            }
+        }
+    }
+
+    public void handleEvent(DatagramQueueElement element) throws IOException {
+        synchronized (semaphore) {
+            DatagramPacket packet = element.getPacket();
+            if (isRotateEvent(packet.getData())) {
+                rotate();
+            }
+            else {
+                EventHandlerUtil.writeHeader(packet.getLength(),
+                                             element.getTimestamp(),
+                                             packet.getAddress(),
+                                             packet.getPort(),
+                                             0, // TODO
+                                             headerBuffer);
+
+                headerBuffer.flip();
+                channel.write(headerBuffer);
+                bodyBuffer.put(packet.getData());
+                bodyBuffer.flip();
+                channel.write(bodyBuffer);
+                out.flush();
+                headerBuffer.clear();
+                bodyBuffer.clear();
             }
         }
     }

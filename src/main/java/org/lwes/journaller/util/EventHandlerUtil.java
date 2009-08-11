@@ -26,6 +26,36 @@ public class EventHandlerUtil implements JournallerConstants {
     private static transient Log log = LogFactory.getLog(EventHandlerUtil.class);
 
     /**
+     * Write the header bytes to the ByteBuffer.
+     *
+     * @param length length of the body
+     * @param time currentTimeMillis that the event was caught/emitted.
+     * @param ip SenderIP
+     * @param port SenderPort
+     * @param siteId Sender siteID
+     * @param buf the ByteBuffer to write all this to.
+     */
+    public static void writeHeader(int length,
+                                   long time,
+                                   InetAddress ip,
+                                   int port,
+                                   int siteId,
+                                   ByteBuffer buf) {
+
+        byte[] unused = new byte[4];
+        byte[] shortBuf = new byte[2];
+        Serializer.serializeUINT16(length, shortBuf, 0);
+        buf.put(shortBuf)
+                .putLong(time)
+                .put(ip.getAddress());
+        Serializer.serializeUINT16(port, shortBuf, 0);
+        buf.put(shortBuf);
+        Serializer.serializeUINT16(siteId, shortBuf, 0);
+        buf.put(shortBuf)
+                .put(unused);
+    }
+
+    /**
      * The header is [length][time][host][port][site][unused]
      * [length] is uint16  -- 2
      * [time] is int64 -- 8
@@ -40,7 +70,6 @@ public class EventHandlerUtil implements JournallerConstants {
     public static void writeHeader(Event event, ByteBuffer buf) {
         byte[] data = event.serialize();
         // The header contains bytes reserved for expansion...
-        byte[] unused = new byte[4];
         int size = data.length;
         if (log.isDebugEnabled()) {
             log.debug("size: " + size);
@@ -58,17 +87,7 @@ public class EventHandlerUtil implements JournallerConstants {
                 // who cares
             }
 
-            byte[] shortBuf = new byte[2];
-            Serializer.serializeUINT16(size, shortBuf, 0);
-            buf.put(shortBuf)
-                    .putLong(time)
-                    .put(sender.getAddress());
-            Serializer.serializeUINT16(port, shortBuf, 0);
-            buf.put(shortBuf);
-            Serializer.serializeUINT16(siteId, shortBuf, 0);
-            buf.put(shortBuf)
-                    .put(unused);
-
+            writeHeader(size, time, sender, port, siteId, buf);            
         }
         catch (Exception e) {
             log.error(e.getMessage(), e);

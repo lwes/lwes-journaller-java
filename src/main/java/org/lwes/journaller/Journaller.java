@@ -16,11 +16,14 @@ import org.lwes.EventSystemException;
 import org.lwes.journaller.handler.AbstractFileEventHandler;
 import org.lwes.journaller.handler.GZIPEventHandler;
 import org.lwes.journaller.handler.NIOEventHandler;
-import org.lwes.listener.DatagramEventListener;
-import org.lwes.listener.EventHandler;
+import org.lwes.listener.DatagramQueueElement;
 
 import java.io.IOException;
+import java.net.DatagramPacket;
 import java.net.InetAddress;
+import java.net.MulticastSocket;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 public class Journaller implements Runnable {
 
@@ -31,10 +34,14 @@ public class Journaller implements Runnable {
     private String multicastInterface;
     private int port = 12345;
     private int ttl = 1;
-    private EventHandler eventHandler = null;
-    private DatagramEventListener listener = null;
+    private AbstractFileEventHandler eventHandler = null;
+    private MulticastSocket socket = null;
     private boolean useGzip = false;
     private boolean initialized = false;
+    private boolean running = true;
+    private HandlerThread handlerThread = null;
+    private LinkedBlockingQueue<DatagramQueueElement> queue = new LinkedBlockingQueue();
+
     private static Options options;
 
     static {
@@ -59,24 +66,32 @@ public class Journaller implements Runnable {
             eventHandler = new NIOEventHandler(getFileName());
         }
         InetAddress address = InetAddress.getByName(getMulticastAddress());
-        InetAddress iface = null;
+
+        socket = new MulticastSocket(getPort());
+        socket.joinGroup(address);
+
+        int bufSize = JournallerConstants.MAX_MSG_SIZE*50;
+        String bufSizeStr = System.getProperty("MulticastReceiveBufferSize");
+        if (bufSizeStr != null && !"".equals(bufSizeStr)) {
+            bufSize = Integer.parseInt(bufSizeStr);
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("multicast receive buffer size: "+bufSize);
+        }
+        socket.setReceiveBufferSize(bufSize);
+
         if (getMulticastInterface() != null) {
-            iface = InetAddress.getByName(getMulticastInterface());
+            InetAddress iface = InetAddress.getByName(getMulticastInterface());
+            socket.setInterface(iface);
         }
-        listener = new DatagramEventListener();
-        listener.setAddress(address);
-        if (iface != null) {
-            listener.setInterface(iface);
-        }
-        listener.setPort(getPort());
-        listener.addHandler(eventHandler);
-        if (ttl > 0) {
-            listener.setTimeToLive(ttl);
-        }
-        listener.initialize();
 
         // Add a shutdown hook in case of kill or ^c
         Runtime.getRuntime().addShutdownHook(new ShutdownThread(eventHandler));
+
+        handlerThread = new HandlerThread();
+        Thread t = new Thread(handlerThread, "handler thread");
+        t.setPriority(Thread.NORM_PRIORITY);
+        t.start();
 
         if (log.isInfoEnabled()) {
             log.info("LWES Journaller");
@@ -89,6 +104,10 @@ public class Journaller implements Runnable {
         initialized = true;
     }
 
+    public void shutdown() {
+        running = false;
+    }
+
     public void run() {
 
         try {
@@ -96,18 +115,51 @@ public class Journaller implements Runnable {
                 initialize();
             }
 
-            // keep this thread busy
-            while (true) {
-                try {
-                    Thread.sleep(1000);
-                }
-                catch (Exception e) {
-                    log.error(e.getMessage(), e);
-                }
+            byte[] buffer = new byte[65535];
+
+            while (running) {
+                DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+                socket.receive(packet);
+                /* we record the time *after* the receive because it blocks */
+                long receiptTime = System.currentTimeMillis();
+
+                /* copy the data into a tight buffer so we can release the loose buffer */
+                final byte[] tightBuffer = new byte[packet.getLength()];
+                System.arraycopy(packet.getData(), 0, tightBuffer, 0, tightBuffer.length);
+                packet.setData(tightBuffer);
+
+                /* create an element for the queue */
+                DatagramQueueElement element = new DatagramQueueElement();
+                element.setPacket(packet);
+                element.setTimestamp(receiptTime);
+
+                queue.add(element);
             }
         }
         catch (Exception e) {
             log.error("Error initializing: ", e);
+        }
+    }
+
+    class HandlerThread implements Runnable {
+        public void run() {
+            while (running) {
+                DatagramQueueElement item = null;
+                try {
+                    item = queue.poll(1, TimeUnit.MINUTES);
+                }
+                catch (InterruptedException e) {
+                    log.error(e.getMessage(), e);
+                }
+                if (item != null) {
+                    try {
+                        eventHandler.handleEvent(item);
+                    }
+                    catch (IOException e) {
+                        log.error(e.getMessage(), e);
+                    }
+                }
+            }
         }
     }
 
@@ -164,21 +216,15 @@ public class Journaller implements Runnable {
 
     class ShutdownThread extends Thread {
 
-        EventHandler eventHandler;
+        AbstractFileEventHandler eventHandler;
 
-        ShutdownThread(EventHandler eh) {
+        ShutdownThread(AbstractFileEventHandler eh) {
             eventHandler = eh;
         }
 
         public void run() {
             log.debug("shutdown thread run()");
             eventHandler.destroy();
-            try {
-                listener.shutdown();
-            }
-            catch (EventSystemException e) {
-                log.error(e.getMessage(), e);
-            }
         }
     }
 
@@ -222,7 +268,7 @@ public class Journaller implements Runnable {
         this.port = port;
     }
 
-    public EventHandler getEventHandler() {
+    public AbstractFileEventHandler getEventHandler() {
         return eventHandler;
     }
 

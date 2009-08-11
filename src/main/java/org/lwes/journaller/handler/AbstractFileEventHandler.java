@@ -10,12 +10,13 @@ import org.lwes.listener.EventHandler;
 import java.io.IOException;
 import java.util.Calendar;
 
-public abstract class AbstractFileEventHandler implements EventHandler {
+public abstract class AbstractFileEventHandler implements EventHandler, DatagramQueueElementHandler {
 
     private static transient Log log = LogFactory.getLog(AbstractFileEventHandler.class);
 
     private String filename;
     private String generatedFilename;
+    private static final byte[] ROTATE = "Command::Rotate".getBytes();
 
     protected String getDateString() {
         Calendar c = Calendar.getInstance();
@@ -65,5 +66,12 @@ public abstract class AbstractFileEventHandler implements EventHandler {
         this.filename = filename;
     }
 
-
+    public boolean isRotateEvent(byte[] bytes) {
+        for (int i=0; i<ROTATE.length; i++) {
+            if (bytes[i+1] != ROTATE[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
