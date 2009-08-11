@@ -49,7 +49,7 @@ public class CountDeJournaller extends DeJournaller {
 
             if (line.hasOption("h") || line.hasOption("help")) {
                 HelpFormatter formatter = new HelpFormatter();
-                formatter.printHelp("lwes-journaller", options);
+                formatter.printHelp("lwes-journal-counter", options);
                 Runtime.getRuntime().exit(1);
             }
             if (line.hasOption("f") || line.hasOption("file")) {
