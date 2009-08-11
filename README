@@ -23,3 +23,16 @@ lwes-journaller-stop script or use kill -15.
 To tell the journaller to rotate the log file (you will probably want a cron job for this):
 
 % bin/lwes-rotate-log -m <multicast_addr> -p <multicast_port>
+
+If you are getting bad throughput as far as number of events per second you can process
+before you see loss, make sure your operating system udp buffer is set to a reasonable number:
+
+Linux               sysctl -w net.core.rmem_max=8388608
+Solaris             ndd -set /dev/udp udp_max_buf 8388608
+FreeBSD, Darwin     sysctl -w kern.ipc.maxsockbuf=8388608
+AIX                 no -o sb_max=8388608
+
+You can also increase the read buffer on the multicast socket by setting the lwes specific
+system property MulticastReceiveBufferSize. For example,
+
+java -DMulticastReceiveBufferSize=8388608 ...
