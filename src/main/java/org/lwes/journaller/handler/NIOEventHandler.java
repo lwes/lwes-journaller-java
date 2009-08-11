@@ -32,6 +32,9 @@ public class NIOEventHandler extends AbstractFileEventHandler {
     public NIOEventHandler(String outFile) throws IOException {
         setFilename(outFile);
         createFileHandles();
+        // TODO: not sure this is necessary
+        headerBuffer.clear();
+        bodyBuffer.clear();
     }
 
     protected void rotate() throws IOException {
@@ -71,8 +74,6 @@ public class NIOEventHandler extends AbstractFileEventHandler {
             }
             else {
                 try {
-                    headerBuffer.clear();
-                    bodyBuffer.clear();
                     EventHandlerUtil.writeHeader(event, headerBuffer);
                     headerBuffer.flip();
                     channel.write(headerBuffer);
@@ -80,6 +81,8 @@ public class NIOEventHandler extends AbstractFileEventHandler {
                     bodyBuffer.flip();
                     channel.write(bodyBuffer);
                     out.flush();
+                    headerBuffer.clear();
+                    bodyBuffer.clear();
                 }
                 catch (IOException e) {
                     log.error(e.getMessage(), e);
