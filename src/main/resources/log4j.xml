@@ -23,10 +23,7 @@
     <category name="org.lwes.journaller.CountDeJournaller">
         <priority value="INFO"/>
         <appender-ref ref="CONSOLE"/>
-    </category>
-    <category name="org.lwes.listener.DatagramEnqueuer">
-        <priority value="DEBUG"/>
-    </category>
+    </category>   
 
     <root>
         <priority value="INFO"/>
