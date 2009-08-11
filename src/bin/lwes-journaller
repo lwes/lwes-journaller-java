@@ -1,6 +1,6 @@
 #!/bin/bash
 
-JAVA_OPTS=${JAVA_OPTS:-"-XX:+UseParallelGC -Xms512m -Xmx512m -ea -server"}
+JAVA_OPTS=${JAVA_OPTS:-"-XX:+UseParallelGC -Xms512m -Xmx512m -ea -server -DMulticastReceiveBufferSize=8388608"}
 
 ##
 # Startup script for the java journaller.
