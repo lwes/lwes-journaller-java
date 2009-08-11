@@ -34,7 +34,7 @@ public class Journaller implements Runnable {
     private EventHandler eventHandler = null;
     private DatagramEventListener listener = null;
     private boolean useGzip = false;
-
+    private boolean initialized = false;
     private static Options options;
 
     static {
@@ -74,22 +74,26 @@ public class Journaller implements Runnable {
             listener.setTimeToLive(ttl);
         }
         listener.initialize();
+
+        // Add a shutdown hook in case of kill or ^c
+        Runtime.getRuntime().addShutdownHook(new ShutdownThread(eventHandler));
+
+        if (log.isInfoEnabled()) {
+            log.info("LWES Journaller");
+            log.info("Multicast Address: " + getMulticastAddress());
+            log.info("Multicast Interface: " + getMulticastInterface());
+            log.info("Multicast Port: " + getPort());
+            log.info("Using event hander: " + getEventHandler().getClass().getName());
+        }
+
+        initialized = true;
     }
 
     public void run() {
 
         try {
-            initialize();
-
-            // Add a shutdown hook in case of kill or ^c
-            Runtime.getRuntime().addShutdownHook(new ShutdownThread(eventHandler));
-
-            if (log.isInfoEnabled()) {
-                log.info("LWES Journaller");
-                log.info("Multicast Address: " + getMulticastAddress());
-                log.info("Multicast Interface: " + getMulticastInterface());
-                log.info("Multicast Port: " + getPort());
-                log.info("Using event hander: " + getEventHandler().getClass().getName());
+            if (!initialized) {
+                initialize();
             }
 
             // keep this thread busy
