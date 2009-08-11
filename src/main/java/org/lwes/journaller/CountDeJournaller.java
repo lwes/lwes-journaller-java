@@ -23,7 +23,7 @@ public class CountDeJournaller extends DeJournaller {
         options.addOption("f", "file", true, "File to read events from.");
         options.addOption("e", "esf-file", true, "Event definition file.");
         options.addOption("h", "help", false, "Print this message.");
-        options.addOption(null, "gzipped", false, "File is gzipped.");
+        options.addOption(null, "gzip", false, "File is gzipped.");
     }
 
     public void run() {
@@ -62,7 +62,7 @@ public class CountDeJournaller extends DeJournaller {
                               line.getOptionValue("esf-file") :
                               line.getOptionValue("e"));
             }
-            if (line.hasOption("gzipped")) {
+            if (line.hasOption("gzip")) {
                 dj.setGzipped(true);
             }
             dj.run();
