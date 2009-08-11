@@ -5,6 +5,10 @@
 # gracefully, the file won't be closed and likely will not be readable.
 ##
 PID_FILE=${1:-journaller.pid}
+if [ ! -f $PID_FILE ]; then
+  echo "No pid file. Exiting."
+  exit
+fi
 PID=`cat $PID_FILE`
 
 # Check if it's running
