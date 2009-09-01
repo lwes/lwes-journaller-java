@@ -2,11 +2,15 @@
 
 JAVA_OPTS=${JAVA_OPTS:-"-XX:+UseParallelGC -Xms512m -Xmx512m -ea -server -DMulticastReceiveBufferSize=8388608"}
 
+# Make sure we can run this script from any directory.
+bin=`dirname "$0"`
+bin=`cd "$bin"; pwd`
+
 ##
 # Startup script for the java journaller.
 ##
 
-for jar in lib/*.jar
+for jar in ${bin}/lib/*.jar
 do
   if [ -z $CP ]; then
     CP=${jar}
@@ -14,7 +18,7 @@ do
     CP=${CP}:${jar}
   fi
 done
-CP=${CP}:config
+CP=${CP}:${bin}/config
 
 $JAVA_HOME/bin/java \
 $JAVA_OPTS \
@@ -22,4 +26,4 @@ $JAVA_OPTS \
 -classpath $CP \
 org.lwes.journaller.Journaller $@ &
 
-echo $! > journaller.pid
+echo $! > ${bin}/journaller.pid

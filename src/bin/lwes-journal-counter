@@ -1,6 +1,10 @@
 #!/bin/bash
 
-for jar in lib/*.jar
+# Make sure we can run this script from any directory.
+bin=`dirname "$0"`
+bin=`cd "$bin"; pwd`
+
+for jar in ${bin}/lib/*.jar
 do
   if [ -z $CP ]; then
     CP=${jar}
@@ -8,7 +12,7 @@ do
     CP=${CP}:${jar}
   fi
 done
-CP=${CP}:config
+CP=${CP}:${bin}/config
 
 
 $JAVA_HOME/bin/java \
