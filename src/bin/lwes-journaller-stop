@@ -8,7 +8,7 @@ bin=`cd "$bin"; pwd`
 # Script to try and gracefully shut down the journaller. If it is not shut down
 # gracefully, the file won't be closed and likely will not be readable.
 ##
-PID_FILE=${1:-${bin}/journaller.pid}
+PID_FILE=${1:-journaller.pid}
 if [ ! -f $PID_FILE ]; then
   echo "No pid file. Exiting."
   exit

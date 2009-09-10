@@ -26,4 +26,5 @@ $JAVA_OPTS \
 -classpath $CP \
 org.lwes.journaller.Journaller $@ &
 
-echo $! > ${bin}/journaller.pid
+# Pid file will be written in the current directory
+echo $! > journaller.pid
