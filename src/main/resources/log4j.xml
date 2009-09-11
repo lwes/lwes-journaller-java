@@ -23,7 +23,7 @@
     <category name="org.lwes.journaller.CountDeJournaller">
         <priority value="INFO"/>
         <appender-ref ref="CONSOLE"/>
-    </category>   
+    </category>
 
     <root>
         <priority value="INFO"/>
