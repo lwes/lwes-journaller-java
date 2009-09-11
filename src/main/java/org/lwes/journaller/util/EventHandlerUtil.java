@@ -7,9 +7,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lwes.AttributeNotSetException;
 import org.lwes.Event;
-import org.lwes.NoSuchAttributeException;
-import org.lwes.NoSuchAttributeTypeException;
-import org.lwes.NoSuchEventException;
+import org.lwes.EventSystemException;
 import org.lwes.db.EventTemplateDB;
 import org.lwes.journaller.JournallerConstants;
 import org.lwes.serializer.Deserializer;
@@ -87,7 +85,7 @@ public class EventHandlerUtil implements JournallerConstants {
                 // who cares
             }
 
-            writeHeader(size, time, sender, port, siteId, buf);            
+            writeHeader(size, time, sender, port, siteId, buf);
         }
         catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -103,9 +101,7 @@ public class EventHandlerUtil implements JournallerConstants {
                                   DeserializerState state,
                                   EventTemplateDB evtTemplate)
             throws IOException,
-                   NoSuchAttributeException,
-                   NoSuchAttributeTypeException,
-                   NoSuchEventException {
+                   EventSystemException {
 
         byte[] headerData = new byte[MAX_HEADER_SIZE];
         // read header

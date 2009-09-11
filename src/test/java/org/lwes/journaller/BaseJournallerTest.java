@@ -7,9 +7,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.Ignore;
 import org.lwes.Event;
-import org.lwes.NoSuchAttributeException;
-import org.lwes.NoSuchAttributeTypeException;
-import org.lwes.NoSuchEventException;
+import org.lwes.EventSystemException;
 import org.lwes.db.EventTemplateDB;
 
 import java.net.InetAddress;
@@ -21,9 +19,7 @@ public class BaseJournallerTest {
     private static transient Log log = LogFactory.getLog(BaseJournallerTest.class);
 
     public Event createRotateEvent()
-            throws NoSuchAttributeException,
-                   NoSuchAttributeTypeException,
-                   NoSuchEventException,
+            throws EventSystemException,
                    UnknownHostException {
 
         EventTemplateDB evtDb = new EventTemplateDB();
@@ -37,9 +33,7 @@ public class BaseJournallerTest {
     }
 
     public Event createTestEvent()
-            throws NoSuchAttributeException,
-                   NoSuchAttributeTypeException,
-                   NoSuchEventException,
+            throws EventSystemException,
                    UnknownHostException {
 
         EventTemplateDB evtDb = new EventTemplateDB();

@@ -11,9 +11,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import org.junit.Test;
 import org.lwes.Event;
-import org.lwes.NoSuchAttributeException;
-import org.lwes.NoSuchAttributeTypeException;
-import org.lwes.NoSuchEventException;
+import org.lwes.EventSystemException;
 import org.lwes.journaller.handler.NIOEventHandler;
 import org.lwes.journaller.util.EventHandlerUtil;
 import org.lwes.listener.DatagramQueueElement;
@@ -27,8 +25,7 @@ public class NIOEventHandlerTest extends BaseJournallerTest {
     private transient Log log = LogFactory.getLog(NIOEventHandlerTest.class);
 
     public void testDatagramPacket()
-            throws IOException, NoSuchAttributeException,
-                   NoSuchAttributeTypeException, NoSuchEventException {
+            throws IOException, EventSystemException {
 
         NIOEventHandler handler = new NIOEventHandler("target/junit");
         String generatedFile1 = handler.getGeneratedFilename();
@@ -67,8 +64,7 @@ public class NIOEventHandlerTest extends BaseJournallerTest {
      */
     @Test
     public void testHandler()
-            throws IOException, NoSuchAttributeException,
-                   NoSuchAttributeTypeException, NoSuchEventException {
+            throws IOException, EventSystemException {
 
         NIOEventHandler handler = new NIOEventHandler("target/junit");
         String generatedFile1 = handler.getGeneratedFilename();
