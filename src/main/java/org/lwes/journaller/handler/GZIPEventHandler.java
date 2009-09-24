@@ -84,7 +84,8 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
     public void handleEvent(DatagramQueueElement element) throws IOException {
         synchronized (semaphore) {
             DatagramPacket packet = element.getPacket();
-            if (isRotateEvent(packet.getData())) {
+            if (isRotateEvent(packet.getData()) &&
+                !tooSoonToRotate(System.currentTimeMillis())) {
                 rotate();
             }
             else {
@@ -97,7 +98,7 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
                                          b);
                 out.write(b.array(), 0, DeJournaller.MAX_HEADER_SIZE);
                 out.write(packet.getData());
-                out.flush();            
+                out.flush();
             }
         }
     }
@@ -114,7 +115,8 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
             if (log.isDebugEnabled()) {
                 log.debug("Received event: " + event);
             }
-            if ("Command::Rotate".equals(event.getEventName())) {
+            if ("Command::Rotate".equals(event.getEventName()) &&
+                !tooSoonToRotate(System.currentTimeMillis())) {
                 try {
                     rotate();
                 }

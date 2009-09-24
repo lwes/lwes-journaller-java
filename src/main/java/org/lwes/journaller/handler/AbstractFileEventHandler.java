@@ -16,6 +16,8 @@ public abstract class AbstractFileEventHandler implements EventHandler, Datagram
 
     private String filename;
     private String generatedFilename;
+    private long rotateGracePeriod = 1000 * 30; // 30 seconds
+    private long lastRotateTimestamp = 0;
     private static final byte[] ROTATE = "Command::Rotate".getBytes();
 
     protected String getDateString() {
@@ -67,11 +69,33 @@ public abstract class AbstractFileEventHandler implements EventHandler, Datagram
     }
 
     public boolean isRotateEvent(byte[] bytes) {
-        for (int i=0; i<ROTATE.length; i++) {
-            if (bytes[i+1] != ROTATE[i]) {
+        for (int i = 0; i < ROTATE.length; i++) {
+            if (bytes[i + 1] != ROTATE[i]) {
                 return false;
             }
         }
         return true;
+    }
+
+    public boolean tooSoonToRotate(long time) {
+        if (lastRotateTimestamp > 0 &&
+            (time - lastRotateTimestamp) < rotateGracePeriod) {
+            if (log.isDebugEnabled()) {
+                log.debug("Too soon to rotate!");
+            }
+            return true;
+        }
+        else {
+            lastRotateTimestamp = time;
+            return false;
+        }
+    }
+
+    public long getRotateGracePeriod() {
+        return rotateGracePeriod;
+    }
+
+    public void setRotateGracePeriod(long rotateGracePeriod) {
+        this.rotateGracePeriod = rotateGracePeriod;
     }
 }

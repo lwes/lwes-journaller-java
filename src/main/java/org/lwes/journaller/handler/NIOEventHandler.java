@@ -66,7 +66,8 @@ public class NIOEventHandler extends AbstractFileEventHandler {
     public void handleEvent(DatagramQueueElement element) throws IOException {
         synchronized (semaphore) {
             DatagramPacket packet = element.getPacket();
-            if (isRotateEvent(packet.getData())) {
+            if (isRotateEvent(packet.getData()) &&
+                !tooSoonToRotate(System.currentTimeMillis())) {
                 rotate();
             }
             else {
@@ -92,7 +93,8 @@ public class NIOEventHandler extends AbstractFileEventHandler {
     public void handleEvent(Event event) {
         synchronized (semaphore) {
             log.debug("Processing event: " + event.getEventName());
-            if ("Command::Rotate".equals(event.getEventName())) {
+            if ("Command::Rotate".equals(event.getEventName()) &&
+                !tooSoonToRotate(System.currentTimeMillis())) {
                 try {
                     rotate();
                 }

@@ -135,7 +135,7 @@ public class TestEmitter extends MulticastEventEmitter implements Runnable {
             log.error(e);
         }
         catch (ParseException e) {
-            log.error(e);            
+            log.error(e);
         }
     }
 
