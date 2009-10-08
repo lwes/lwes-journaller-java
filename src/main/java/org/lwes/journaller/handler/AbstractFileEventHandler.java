@@ -5,32 +5,24 @@ package org.lwes.journaller.handler;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.lwes.journaller.util.FilenameFormatter;
 import org.lwes.listener.EventHandler;
 
 import java.io.IOException;
-import java.util.Calendar;
 
 public abstract class AbstractFileEventHandler implements EventHandler, DatagramQueueElementHandler {
 
     private static transient Log log = LogFactory.getLog(AbstractFileEventHandler.class);
 
+    private FilenameFormatter formatter = new FilenameFormatter();
+
     private String filename;
-    private String generatedFilename;
+    private String filenamePattern;
+
+    private int siteId = 0;
     private long rotateGracePeriod = 1000 * 30; // 30 seconds
     private long lastRotateTimestamp = 0;
     private static final byte[] ROTATE = "Command::Rotate".getBytes();
-
-    protected String getDateString() {
-        Calendar c = Calendar.getInstance();
-        StringBuilder fn = new StringBuilder()
-                .append(getFilename())
-                .append(c.get(Calendar.YEAR))
-                .append(pad(c.get(Calendar.MONTH), 2))
-                .append(pad(c.get(Calendar.DAY_OF_MONTH), 2))
-                .append(pad(c.get(Calendar.HOUR_OF_DAY), 2))
-                .append(pad(c.get(Calendar.MINUTE), 2));
-        return fn.toString();
-    }
 
     /**
      * Make sure number is the specified number of digits. If not <b>prepend</b>
@@ -52,20 +44,27 @@ public abstract class AbstractFileEventHandler implements EventHandler, Datagram
 
     protected abstract void rotate() throws IOException;
 
-    public String getGeneratedFilename() {
-        return generatedFilename;
-    }
-
-    public void setGeneratedFilename(String generatedFilename) {
-        this.generatedFilename = generatedFilename;
-    }
+    public abstract String getFileExtension();
 
     public String getFilename() {
         return filename;
     }
 
-    public void setFilename(String filename) {
-        this.filename = filename;
+    public String getFilename(boolean reset) {
+        if (reset) {
+            setFilename(filenamePattern);
+        }
+        return getFilename();
+    }
+
+    public void setFilename(String filenamePattern) {
+        this.filenamePattern = filenamePattern;
+        String fn = formatter.format(filenamePattern);
+        if (getFileExtension() != null &&
+            !fn.endsWith(getFileExtension())) {
+            fn += getFileExtension();
+        }
+        this.filename = fn;
     }
 
     public boolean isRotateEvent(byte[] bytes) {
@@ -97,5 +96,21 @@ public abstract class AbstractFileEventHandler implements EventHandler, Datagram
 
     public void setRotateGracePeriod(long rotateGracePeriod) {
         this.rotateGracePeriod = rotateGracePeriod;
+    }
+
+    public int getSiteId() {
+        return siteId;
+    }
+
+    public void setSiteId(int siteId) {
+        this.siteId = siteId;
+    }
+
+    public String getFilenamePattern() {
+        return filenamePattern;
+    }
+
+    public void setFilenamePattern(String filenamePattern) {
+        this.filenamePattern = filenamePattern;
     }
 }

@@ -16,6 +16,7 @@ import org.lwes.EventSystemException;
 import org.lwes.journaller.handler.AbstractFileEventHandler;
 import org.lwes.journaller.handler.GZIPEventHandler;
 import org.lwes.journaller.handler.NIOEventHandler;
+import org.lwes.journaller.util.FilenameFormatter;
 import org.lwes.listener.DatagramQueueElement;
 
 import java.io.IOException;
@@ -47,6 +48,7 @@ public class Journaller implements Runnable {
     static {
         options = new Options();
         options.addOption("f", "file", true, "File to write events to.");
+        options.addOption("l", "file-pattern", true, "Pattern to use for file name.");
         options.addOption("m", "multicast-address", true, "Multicast address.");
         options.addOption("p", "port", true, "Multicast Port.");
         options.addOption("i", "interface", true, "Multicast Interface.");
@@ -70,13 +72,13 @@ public class Journaller implements Runnable {
         socket = new MulticastSocket(getPort());
         socket.joinGroup(address);
 
-        int bufSize = JournallerConstants.MAX_MSG_SIZE*50;
+        int bufSize = JournallerConstants.MAX_MSG_SIZE * 50;
         String bufSizeStr = System.getProperty("MulticastReceiveBufferSize");
         if (bufSizeStr != null && !"".equals(bufSizeStr)) {
             bufSize = Integer.parseInt(bufSizeStr);
         }
         if (log.isDebugEnabled()) {
-            log.debug("multicast receive buffer size: "+bufSize);
+            log.debug("multicast receive buffer size: " + bufSize);
         }
         socket.setReceiveBufferSize(bufSize);
 
@@ -175,11 +177,6 @@ public class Journaller implements Runnable {
                 formatter.printHelp("lwes-journaller", options);
                 Runtime.getRuntime().exit(1);
             }
-            if (line.hasOption("f") || line.hasOption("file")) {
-                j.setFileName(line.getOptionValue("f") == null ?
-                              line.getOptionValue("file") :
-                              line.getOptionValue("f"));
-            }
             if (line.hasOption("m") || line.hasOption("multicast-address")) {
                 j.setMulticastAddress(line.getOptionValue("m") == null ?
                                       line.getOptionValue("multicast-address") :
@@ -202,6 +199,21 @@ public class Journaller implements Runnable {
             }
             if (line.hasOption("gzip")) {
                 j.setUseGzip(true);
+            }
+
+            // Use one or the other for determining file name
+            if (line.hasOption("l") || line.hasOption("file-pattern")) {
+                String pat = line.getOptionValue("l") == null ?
+                             line.getOptionValue("file-pattern") :
+                             line.getOptionValue("l");
+                FilenameFormatter f = new FilenameFormatter();
+                String fn = f.format(pat);
+                j.setFileName(fn);
+            }
+            else if (line.hasOption("f") || line.hasOption("file")) {
+                j.setFileName(line.getOptionValue("f") == null ?
+                              line.getOptionValue("file") :
+                              line.getOptionValue("f"));
             }
 
             j.run();

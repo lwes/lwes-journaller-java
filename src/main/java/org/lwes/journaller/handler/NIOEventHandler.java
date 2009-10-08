@@ -10,7 +10,6 @@ import org.lwes.journaller.DeJournaller;
 import org.lwes.journaller.util.EventHandlerUtil;
 import org.lwes.listener.DatagramQueueElement;
 
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -31,10 +30,10 @@ public class NIOEventHandler extends AbstractFileEventHandler {
     public NIOEventHandler() {
     }
 
-    public NIOEventHandler(String outFile) throws IOException {
-        setFilename(outFile);
+    public NIOEventHandler(String filePattern) throws IOException {
+        setFilename(filePattern);
         createFileHandles();
-        // TODO: not sure this is necessary
+
         headerBuffer.clear();
         bodyBuffer.clear();
     }
@@ -46,8 +45,10 @@ public class NIOEventHandler extends AbstractFileEventHandler {
     }
 
     protected void createFileHandles() throws IOException {
-        setGeneratedFilename(generateFilename());
-        out = new FileOutputStream(getGeneratedFilename());
+        out = new FileOutputStream(getFilename(true));
+        if (log.isDebugEnabled()) {
+            log.debug("using file: "+getFilename());
+        }
         channel = out.getChannel();
     }
 
@@ -75,7 +76,7 @@ public class NIOEventHandler extends AbstractFileEventHandler {
                                              element.getTimestamp(),
                                              packet.getAddress(),
                                              packet.getPort(),
-                                             0, // TODO
+                                             getSiteId(),
                                              headerBuffer);
 
                 headerBuffer.flip();
@@ -121,15 +122,8 @@ public class NIOEventHandler extends AbstractFileEventHandler {
         }
     }
 
-    protected String generateFilename() {
-
-        String fn = getDateString();
-        File f = new File(fn + ".log");
-        for (int i = 1; f.exists(); i++) {
-            f = new File(fn + "-" + i + ".log");
-        }
-
-        return f.getPath();
+    public String getFileExtension() {
+        return ".log";
     }
 
 }

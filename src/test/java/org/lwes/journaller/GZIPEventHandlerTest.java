@@ -1,4 +1,5 @@
-package org.lwes.journaller; /**
+package org.lwes.journaller;
+/**
  * User: fmaritato
  * Date: Apr 22, 2009
  */
@@ -25,11 +26,12 @@ public class GZIPEventHandlerTest extends TestCase {
      */
     public void testHandler() {
         try {
-            GZIPEventHandler handler = new GZIPEventHandler("target/junit");
-            String generatedFile1 = handler.getGeneratedFilename();
+            GZIPEventHandler handler = new GZIPEventHandler("target/junit-%tY%tm%td%tH%tM%tS");
+            String generatedFile1 = handler.getFilename();
             for (int i = 0; i < 10; i++) {
                 handler.handleEvent(createTestEvent());
             }
+            Thread.sleep(1000);
             handler.handleEvent(createRotateEvent());
             MockDeJournaller mdj = new MockDeJournaller();
             mdj.setFileName(generatedFile1);
@@ -39,7 +41,7 @@ public class GZIPEventHandlerTest extends TestCase {
             assertNotNull("Event list was null", eventList);
             assertEquals("Number of events is wrong", 10, eventList.size());
 
-            String generatedFile2 = handler.getGeneratedFilename();
+            String generatedFile2 = handler.getFilename();
             for (int i = 0; i < 10; i++) {
                 handler.handleEvent(createTestEvent());
             }

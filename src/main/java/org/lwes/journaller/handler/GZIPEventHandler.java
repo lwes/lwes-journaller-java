@@ -11,7 +11,6 @@ import org.lwes.journaller.DeJournaller;
 import org.lwes.journaller.util.EventHandlerUtil;
 import org.lwes.listener.DatagramQueueElement;
 
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -32,23 +31,22 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
     /**
      * Create the Event handler and open the output stream to the file.
      *
-     * @param file File we should be writing to.
+     * @param filePattern Filename pattern to use when creating the file
+     *  we should be writing to.
      * @throws IOException if there is a problem opening the file for writing.
      */
-    public GZIPEventHandler(String file) throws IOException {
-        setFilename(file);
-        createFileHandle(getFile());
+    public GZIPEventHandler(String filePattern) throws IOException {
+        setFilename(filePattern);
+        createFileHandle();
     }
 
     /**
      * Convenience method to open a GZIPOutputStream.
      *
-     * @param f File object pointing to the event log we shall be writing to
      * @throws IOException if there is a problem opening a handle to the file.
      */
-    protected void createFileHandle(File f) throws IOException {
-        log.debug("Using file: " + f.getAbsolutePath());
-        out = new GZIPOutputStream(new FileOutputStream(f));
+    protected void createFileHandle() throws IOException {
+        out = new GZIPOutputStream(new FileOutputStream(getFilename(true)));
     }
 
     /**
@@ -62,23 +60,11 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
         if (out != null) {
             out.close();
         }
-        createFileHandle(getFile());
+        createFileHandle();
     }
 
-    /**
-     * Returns a File object pointing to where the logs should be written. Takes care of naming
-     * conventions.
-     *
-     * @return File
-     */
-    protected File getFile() {
-        String fn = getDateString();
-        File f = new File(fn + ".gz");
-        for (int i = 1; f.exists(); i++) {
-            f = new File(fn + "-" + i + ".gz");
-        }
-        setGeneratedFilename(f.getAbsolutePath());
-        return f;
+    public String getFileExtension() {
+        return ".gz";
     }
 
     public void handleEvent(DatagramQueueElement element) throws IOException {
@@ -94,7 +80,7 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
                                          element.getTimestamp(),
                                          packet.getAddress(),
                                          packet.getPort(),
-                                         0, // TODO
+                                         getSiteId(),
                                          b);
                 out.write(b.array(), 0, DeJournaller.MAX_HEADER_SIZE);
                 out.write(packet.getData());

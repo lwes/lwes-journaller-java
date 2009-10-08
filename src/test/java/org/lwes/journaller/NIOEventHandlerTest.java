@@ -27,8 +27,8 @@ public class NIOEventHandlerTest extends BaseJournallerTest {
     public void testDatagramPacket()
             throws IOException, EventSystemException {
 
-        NIOEventHandler handler = new NIOEventHandler("target/junit");
-        String generatedFile1 = handler.getGeneratedFilename();
+        NIOEventHandler handler = new NIOEventHandler("target/junit-%tH%tM%tS");
+        String generatedFile1 = handler.getFilename();
         for (int i = 0; i < 10; i++) {
             Event evt = createTestEvent();
             byte[] b1 = evt.serialize();
@@ -66,10 +66,16 @@ public class NIOEventHandlerTest extends BaseJournallerTest {
     public void testHandler()
             throws IOException, EventSystemException {
 
-        NIOEventHandler handler = new NIOEventHandler("target/junit");
-        String generatedFile1 = handler.getGeneratedFilename();
+        NIOEventHandler handler = new NIOEventHandler("target/junit-%tH%tM%tS");
+        String generatedFile1 = handler.getFilename();
         for (int i = 0; i < 10; i++) {
             handler.handleEvent(createTestEvent());
+        }
+        try {
+            Thread.sleep(1000);
+        }
+        catch (InterruptedException e) {
+            log.error(e.getMessage(), e);
         }
         handler.handleEvent(createRotateEvent());
 
@@ -85,7 +91,7 @@ public class NIOEventHandlerTest extends BaseJournallerTest {
         }
         assertEquals("Number of events is wrong", 10, eventList.size());
 
-        String generatedFile2 = handler.getGeneratedFilename();
+        String generatedFile2 = handler.getFilename();
         for (int i = 0; i < 10; i++) {
             handler.handleEvent(createTestEvent());
         }
