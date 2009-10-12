@@ -45,7 +45,7 @@ public class NIOEventHandler extends AbstractFileEventHandler {
     }
 
     protected void createFileHandles() throws IOException {
-        out = new FileOutputStream(getFilename(true));
+        out = new FileOutputStream(getFilename(true), true);
         if (log.isDebugEnabled()) {
             log.debug("using file: "+getFilename());
         }

@@ -46,7 +46,7 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
      * @throws IOException if there is a problem opening a handle to the file.
      */
     protected void createFileHandle() throws IOException {
-        out = new GZIPOutputStream(new FileOutputStream(getFilename(true)));
+        out = new GZIPOutputStream(new FileOutputStream(getFilename(true), true));
     }
 
     /**
