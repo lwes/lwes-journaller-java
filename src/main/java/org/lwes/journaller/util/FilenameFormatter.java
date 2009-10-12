@@ -117,7 +117,7 @@ public class FilenameFormatter {
          * @return
          */
         public String pad(int val) {
-            if (val > 0 && val < 10) {
+            if (val >= 0 && val < 10) {
                 return "0"+val;
             }
             else {
