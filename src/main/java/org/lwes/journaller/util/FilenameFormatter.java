@@ -95,7 +95,7 @@ public class FilenameFormatter {
         public String toString() {
             switch (modifier) {
                 case DateTime.HOUR_OF_DAY_0:
-                    return pad(calendar.get(Calendar.HOUR));
+                    return pad(calendar.get(Calendar.HOUR_OF_DAY));
                 case DateTime.MINUTE:
                     return pad(calendar.get(Calendar.MINUTE));
                 case DateTime.SECOND:
