@@ -16,7 +16,6 @@ import org.lwes.EventSystemException;
 import org.lwes.journaller.handler.AbstractFileEventHandler;
 import org.lwes.journaller.handler.GZIPEventHandler;
 import org.lwes.journaller.handler.NIOEventHandler;
-import org.lwes.journaller.util.FilenameFormatter;
 import org.lwes.listener.DatagramQueueElement;
 
 import java.io.IOException;
@@ -31,6 +30,7 @@ public class Journaller implements Runnable {
     private static transient Log log = LogFactory.getLog(Journaller.class);
 
     private String fileName;
+    private String filePattern;
     private String multicastAddress = "224.1.1.11";
     private String multicastInterface;
     private int port = 12345;
@@ -61,11 +61,12 @@ public class Journaller implements Runnable {
     }
 
     public void initialize() throws EventSystemException, IOException {
+        String arg = getFileName() == null ? getFilePattern() : getFileName();
         if (useGzip) {
-            eventHandler = new GZIPEventHandler(getFileName());
+            eventHandler = new GZIPEventHandler(arg);
         }
         else {
-            eventHandler = new NIOEventHandler(getFileName());
+            eventHandler = new NIOEventHandler(arg);
         }
         InetAddress address = InetAddress.getByName(getMulticastAddress());
 
@@ -206,9 +207,7 @@ public class Journaller implements Runnable {
                 String pat = line.getOptionValue("l") == null ?
                              line.getOptionValue("file-pattern") :
                              line.getOptionValue("l");
-                FilenameFormatter f = new FilenameFormatter();
-                String fn = f.format(pat);
-                j.setFileName(fn);
+                j.setFilePattern(pat);
             }
             else if (line.hasOption("f") || line.hasOption("file")) {
                 j.setFileName(line.getOptionValue("f") == null ?
@@ -294,5 +293,13 @@ public class Journaller implements Runnable {
 
     public void setTtl(int ttl) {
         this.ttl = ttl;
+    }
+
+    public String getFilePattern() {
+        return filePattern;
+    }
+
+    public void setFilePattern(String filePattern) {
+        this.filePattern = filePattern;
     }
 }

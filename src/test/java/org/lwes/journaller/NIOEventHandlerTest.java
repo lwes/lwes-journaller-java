@@ -16,6 +16,7 @@ import org.lwes.journaller.handler.NIOEventHandler;
 import org.lwes.journaller.util.EventHandlerUtil;
 import org.lwes.listener.DatagramQueueElement;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.nio.ByteBuffer;
@@ -27,12 +28,12 @@ public class NIOEventHandlerTest extends BaseJournallerTest {
     public void testDatagramPacket()
             throws IOException, EventSystemException {
 
-        NIOEventHandler handler = new NIOEventHandler("target/junit-%tH%tM%tS");
+        NIOEventHandler handler = new NIOEventHandler("target/junit-nio-%tH%tM%tS");
         String generatedFile1 = handler.getFilename();
         for (int i = 0; i < 10; i++) {
             Event evt = createTestEvent();
             byte[] b1 = evt.serialize();
-            byte[] bytes = new byte[b1.length+JournallerConstants.MAX_HEADER_SIZE];
+            byte[] bytes = new byte[b1.length + JournallerConstants.MAX_HEADER_SIZE];
             ByteBuffer buf = ByteBuffer.wrap(bytes);
             EventHandlerUtil.writeEvent(evt, buf);
             DatagramPacket p = new DatagramPacket(bytes, bytes.length);
@@ -54,7 +55,10 @@ public class NIOEventHandlerTest extends BaseJournallerTest {
             }
         }
         assertEquals("Number of events is wrong", 10, eventList.size());
-
+        File f = new File(generatedFile1);
+        if (f.exists()) {
+            f.delete();
+        }
     }
 
     /**
@@ -66,7 +70,7 @@ public class NIOEventHandlerTest extends BaseJournallerTest {
     public void testHandler()
             throws IOException, EventSystemException {
 
-        NIOEventHandler handler = new NIOEventHandler("target/junit-%tH%tM%tS");
+        NIOEventHandler handler = new NIOEventHandler("target/junit-nio-%tH%tM%tS");
         String generatedFile1 = handler.getFilename();
         for (int i = 0; i < 10; i++) {
             handler.handleEvent(createTestEvent());
@@ -90,6 +94,10 @@ public class NIOEventHandlerTest extends BaseJournallerTest {
             }
         }
         assertEquals("Number of events is wrong", 10, eventList.size());
+        File f = new File(generatedFile1);
+        if (f.exists()) {
+            f.delete();
+        }
 
         String generatedFile2 = handler.getFilename();
         for (int i = 0; i < 10; i++) {
@@ -102,7 +110,10 @@ public class NIOEventHandlerTest extends BaseJournallerTest {
         eventList = mdj.getEventList();
         assertNotNull("Event list was null", eventList);
         assertEquals("Number of events is wrong", 10, eventList.size());
-
+        f = new File(generatedFile2);
+        if (f.exists()) {
+            f.delete();
+        }
     }
 
 }

@@ -31,7 +31,8 @@ public class NIOEventHandler extends AbstractFileEventHandler {
     }
 
     public NIOEventHandler(String filePattern) throws IOException {
-        setFilename(filePattern);
+        setFilenamePattern(filePattern);
+        generateFilename();
         createFileHandles();
 
         headerBuffer.clear();
@@ -41,11 +42,12 @@ public class NIOEventHandler extends AbstractFileEventHandler {
     protected void rotate() throws IOException {
         channel.close();
         out.close();
+        generateFilename();
         createFileHandles();
     }
 
     protected void createFileHandles() throws IOException {
-        out = new FileOutputStream(getFilename(true), true);
+        out = new FileOutputStream(getFilename(), true);
         if (log.isDebugEnabled()) {
             log.debug("using file: "+getFilename());
         }

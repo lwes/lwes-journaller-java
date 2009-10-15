@@ -9,6 +9,7 @@ import org.lwes.journaller.util.FilenameFormatter;
 import org.lwes.listener.EventHandler;
 
 import java.io.IOException;
+import java.util.Calendar;
 
 public abstract class AbstractFileEventHandler implements EventHandler, DatagramQueueElementHandler {
 
@@ -50,21 +51,19 @@ public abstract class AbstractFileEventHandler implements EventHandler, Datagram
         return filename;
     }
 
-    public String getFilename(boolean reset) {
-        if (reset) {
-            setFilename(filenamePattern);
-        }
-        return getFilename();
+    public String generateFilename() {
+        return generateFilename(null);
     }
 
-    public void setFilename(String filenamePattern) {
-        this.filenamePattern = filenamePattern;
-        String fn = formatter.format(filenamePattern);
+    public String generateFilename(Calendar c) {
+        String fn = formatter.format(filenamePattern, c);
         if (getFileExtension() != null &&
             !fn.endsWith(getFileExtension())) {
             fn += getFileExtension();
         }
         this.filename = fn;
+
+        return fn;
     }
 
     public boolean isRotateEvent(byte[] bytes) {

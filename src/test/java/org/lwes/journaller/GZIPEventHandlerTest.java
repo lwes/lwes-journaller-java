@@ -12,6 +12,7 @@ import org.lwes.EventSystemException;
 import org.lwes.db.EventTemplateDB;
 import org.lwes.journaller.handler.GZIPEventHandler;
 
+import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
@@ -26,8 +27,11 @@ public class GZIPEventHandlerTest extends TestCase {
      */
     public void testHandler() {
         try {
-            GZIPEventHandler handler = new GZIPEventHandler("target/junit-%tY%tm%td%tH%tM%tS");
+            GZIPEventHandler handler = new GZIPEventHandler("target/junit-gzip-%tY%tm%td%tH%tM%tS");
             String generatedFile1 = handler.getFilename();
+            if (log.isDebugEnabled()) {
+                log.debug("generated file: "+generatedFile1);
+            }
             for (int i = 0; i < 10; i++) {
                 handler.handleEvent(createTestEvent());
             }
@@ -53,6 +57,15 @@ public class GZIPEventHandlerTest extends TestCase {
             eventList = mdj.getEventList();
             assertNotNull("Event list was null", eventList);
             assertEquals("Number of events is wrong", 10, eventList.size());
+
+            File f = new File(generatedFile1);
+            if (f.exists()) {
+                f.delete();
+            }
+            f = new File(generatedFile2);
+            if (f.exists()) {
+                f.delete();
+            }
         }
         catch (Exception e) {
             log.error(e.getMessage(), e);

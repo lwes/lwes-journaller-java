@@ -25,9 +25,14 @@ public class FilenameFormatter {
     public FilenameFormatter() {
     }
 
+
     public String format(String fmtString) {
+        return format(fmtString, null);
+    }
+
+    public String format(String fmtString, Calendar c) {
         StringBuilder buf = new StringBuilder();
-        List l = parse(fmtString);
+        List l = parse(fmtString, c);
         for (Object o : l) {
             buf.append(o.toString());
         }
@@ -35,7 +40,17 @@ public class FilenameFormatter {
     }
 
     public List parse(String fmt) {
-        Calendar cal = Calendar.getInstance();
+        return parse(fmt, null);
+    }
+
+    public List parse(String fmt, Calendar cal) {
+        Calendar c;
+        if (cal == null) {
+            c = Calendar.getInstance();
+        }
+        else {
+            c = cal;
+        }
         LinkedList l = new LinkedList();
         if (fmt.indexOf('%') == -1) {
             l.add(fmt);
@@ -54,7 +69,7 @@ public class FilenameFormatter {
                 }
                 // It is a time stamp field
                 if ("t".equals(sa[4])) {
-                    l.add(new DateTimeObject(sa[5].charAt(0), cal));
+                    l.add(new DateTimeObject(sa[5].charAt(0), c));
                 }
                 // hostname
                 else if ("h".equals(sa[5])) {
@@ -62,7 +77,7 @@ public class FilenameFormatter {
                 }
                 else {
                     if (log.isDebugEnabled()) {
-                        log.debug("unknown flag: "+sa[4]);
+                        log.debug("unknown flag: " + sa[4]);
                     }
                 }
             }
@@ -72,7 +87,7 @@ public class FilenameFormatter {
         return l;
     }
 
-    class DateTimeObject {
+    static class DateTimeObject {
         private char modifier;
         private Calendar calendar;
 
@@ -93,6 +108,7 @@ public class FilenameFormatter {
          * @return
          */
         public String toString() {
+            log.debug("calendar: " + calendar.getTime());
             switch (modifier) {
                 case DateTime.HOUR_OF_DAY_0:
                     return pad(calendar.get(Calendar.HOUR_OF_DAY));
@@ -101,11 +117,11 @@ public class FilenameFormatter {
                 case DateTime.SECOND:
                     return pad(calendar.get(Calendar.SECOND));
                 case DateTime.MONTH:
-                    return pad(calendar.get(Calendar.MONTH)+1);
+                    return pad(calendar.get(Calendar.MONTH) + 1);
                 case DateTime.DAY_OF_MONTH_0:
                     return pad(calendar.get(Calendar.DAY_OF_MONTH));
                 case DateTime.YEAR_4:
-                    return ""+calendar.get(Calendar.YEAR);
+                    return "" + calendar.get(Calendar.YEAR);
                 default:
                     return null;
             }
@@ -113,20 +129,21 @@ public class FilenameFormatter {
 
         /**
          * Pads a number to 2 digits if necessary.
+         *
          * @param val
          * @return
          */
         public String pad(int val) {
             if (val >= 0 && val < 10) {
-                return "0"+val;
+                return "0" + val;
             }
             else {
-                return ""+val;
+                return "" + val;
             }
         }
     }
 
-    class HostnameObject {
+    static class HostnameObject {
         private char modifier;
 
         HostnameObject() {

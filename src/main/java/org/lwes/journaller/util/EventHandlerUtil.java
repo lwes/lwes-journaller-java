@@ -68,10 +68,7 @@ public class EventHandlerUtil implements JournallerConstants {
     public static void writeHeader(Event event, ByteBuffer buf) {
         byte[] data = event.serialize();
         // The header contains bytes reserved for expansion...
-        int size = data.length;
-        if (log.isDebugEnabled()) {
-            log.debug("size: " + size);
-        }
+        int size = data.length;        
         long time = System.currentTimeMillis();
 
         try {

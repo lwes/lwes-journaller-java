@@ -32,11 +32,12 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
      * Create the Event handler and open the output stream to the file.
      *
      * @param filePattern Filename pattern to use when creating the file
-     *  we should be writing to.
+     *                    we should be writing to.
      * @throws IOException if there is a problem opening the file for writing.
      */
     public GZIPEventHandler(String filePattern) throws IOException {
-        setFilename(filePattern);
+        setFilenamePattern(filePattern);
+        generateFilename();
         createFileHandle();
     }
 
@@ -46,7 +47,10 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
      * @throws IOException if there is a problem opening a handle to the file.
      */
     protected void createFileHandle() throws IOException {
-        out = new GZIPOutputStream(new FileOutputStream(getFilename(true), true));
+        out = new GZIPOutputStream(new FileOutputStream(getFilename(), true));
+        if (log.isDebugEnabled()) {
+            log.debug("Created a new log file: " + getFilename());
+        }
     }
 
     /**
@@ -56,10 +60,11 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
      *
      * @throws IOException if there is a problem opening the file.
      */
-    protected void rotate() throws IOException {
+    protected void rotate() throws IOException {        
         if (out != null) {
             out.close();
         }
+        generateFilename();
         createFileHandle();
     }
 
@@ -77,11 +82,11 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
             else {
                 ByteBuffer b = ByteBuffer.allocate(DeJournaller.MAX_HEADER_SIZE);
                 EventHandlerUtil.writeHeader(packet.getLength(),
-                                         element.getTimestamp(),
-                                         packet.getAddress(),
-                                         packet.getPort(),
-                                         getSiteId(),
-                                         b);
+                                             element.getTimestamp(),
+                                             packet.getAddress(),
+                                             packet.getPort(),
+                                             getSiteId(),
+                                             b);
                 out.write(b.array(), 0, DeJournaller.MAX_HEADER_SIZE);
                 out.write(packet.getData());
                 out.flush();
@@ -98,9 +103,6 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
      */
     public void handleEvent(Event event) {
         synchronized (semaphore) {
-            if (log.isDebugEnabled()) {
-                log.debug("Received event: " + event);
-            }
             if ("Command::Rotate".equals(event.getEventName()) &&
                 !tooSoonToRotate(System.currentTimeMillis())) {
                 try {
