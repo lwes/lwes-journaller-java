@@ -68,7 +68,7 @@ public class EventHandlerUtil implements JournallerConstants {
     public static void writeHeader(Event event, ByteBuffer buf) {
         byte[] data = event.serialize();
         // The header contains bytes reserved for expansion...
-        int size = data.length;        
+        int size = data.length;
         long time = System.currentTimeMillis();
 
         try {
@@ -150,6 +150,13 @@ public class EventHandlerUtil implements JournallerConstants {
         byte[] eventData = new byte[MAX_BODY_SIZE];
         // Now read in the event
         in.readFully(eventData, 0, size);
-        return new Event(eventData, false, evtTemplate);
+        
+        Event e = new Event(eventData, false, evtTemplate);
+        e.setIPAddress("SenderIP", ip);
+        e.setUInt16("SenderPort", port);
+        e.setUInt16("SiteID", siteId);
+        e.setInt64("ReceiptTime", time);
+
+        return e;
     }
 }
