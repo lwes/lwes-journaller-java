@@ -33,7 +33,7 @@ public class DeJournaller implements Runnable, JournallerConstants {
     private String fileName;
     private String esfFile;
 
-    private static Options options;
+    protected static Options options;
 
     static {
         options = new Options();
@@ -91,8 +91,18 @@ public class DeJournaller implements Runnable, JournallerConstants {
                     log.error(e.getMessage(), e);
                 }
             }
+            done();
         }
 
+    }
+
+    /**
+     * This method is called after all events in the file have been processed.
+     */
+    public void done() {
+        if (log.isDebugEnabled()) {
+            log.debug("done");
+        }
     }
 
     /**
