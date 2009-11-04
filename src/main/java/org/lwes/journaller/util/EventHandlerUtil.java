@@ -91,7 +91,11 @@ public class EventHandlerUtil implements JournallerConstants {
 
     public static void writeEvent(Event event, ByteBuffer buf) {
         writeHeader(event, buf);
-        buf.put(event.serialize());
+        byte[] bytes = event.serialize();
+        if (log.isDebugEnabled()) {
+            log.debug("event size: "+bytes.length);
+        }
+        buf.put(bytes);
     }
 
     public static Event readEvent(DataInputStream in,
@@ -150,7 +154,7 @@ public class EventHandlerUtil implements JournallerConstants {
         byte[] eventData = new byte[MAX_BODY_SIZE];
         // Now read in the event
         in.readFully(eventData, 0, size);
-        
+
         Event e = new Event(eventData, false, evtTemplate);
         e.setIPAddress("SenderIP", ip);
         e.setUInt16("SenderPort", port);
