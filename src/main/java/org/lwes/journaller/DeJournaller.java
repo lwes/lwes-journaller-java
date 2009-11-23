@@ -32,6 +32,7 @@ public class DeJournaller implements Runnable, JournallerConstants {
     private boolean gzipped;
     private String fileName;
     private String esfFile;
+    private boolean validate = false;
 
     protected static Options options;
 
@@ -41,6 +42,7 @@ public class DeJournaller implements Runnable, JournallerConstants {
         options.addOption("e", "esf-file", true, "Event definition file.");
         options.addOption("h", "help", false, "Print this message.");
         options.addOption("g", "gzipped", false, "Event log is gzipped.");
+        options.addOption("v", "validate", false, "Validate events");
     }
 
     public DeJournaller() {
@@ -59,6 +61,8 @@ public class DeJournaller implements Runnable, JournallerConstants {
         if (getEsfFile() != null) {
             evtTemplate.setESFFile(new File(getEsfFile()));
         }
+        log.debug("esf: " + evtTemplate.getESFFile());
+        log.debug("validate: " + validate);
         evtTemplate.initialize();
 
         DataInputStream in = null;
@@ -71,7 +75,7 @@ public class DeJournaller implements Runnable, JournallerConstants {
                 in = new DataInputStream(new FileInputStream(fileName));
             }
             Event evt;
-            while ((evt = EventHandlerUtil.readEvent(in, state, evtTemplate)) != null) {
+            while ((evt = EventHandlerUtil.readEvent(in, state, evtTemplate, validate)) != null) {
                 state.reset();
                 handleEvent(evt);
             }
@@ -143,6 +147,9 @@ public class DeJournaller implements Runnable, JournallerConstants {
             if (line.hasOption("g") || line.hasOption("gzipped")) {
                 dj.setGzipped(true);
             }
+            if (line.hasOption("v") || line.hasOption("validate")) {
+                dj.setValidate(true);
+            }
 
             dj.run();
         }
@@ -174,5 +181,13 @@ public class DeJournaller implements Runnable, JournallerConstants {
 
     public void setGzipped(boolean gzipped) {
         this.gzipped = gzipped;
+    }
+
+    public boolean isValidate() {
+        return validate;
+    }
+
+    public void setValidate(boolean validate) {
+        this.validate = validate;
     }
 }
