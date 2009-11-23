@@ -5,7 +5,6 @@ package org.lwes.journaller.util;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.lwes.AttributeNotSetException;
 import org.lwes.Event;
 import org.lwes.EventSystemException;
 import org.lwes.db.EventTemplateDB;
@@ -78,7 +77,7 @@ public class EventHandlerUtil implements JournallerConstants {
             try {
                 siteId = event.getUInt16("SiteID");
             }
-            catch (AttributeNotSetException e) {
+            catch (EventSystemException e) {
                 // who cares
             }
 
@@ -101,6 +100,14 @@ public class EventHandlerUtil implements JournallerConstants {
     public static Event readEvent(DataInputStream in,
                                   DeserializerState state,
                                   EventTemplateDB evtTemplate)
+            throws IOException, EventSystemException {
+        return readEvent(in, state, evtTemplate, false);
+    }
+
+    public static Event readEvent(DataInputStream in,
+                                  DeserializerState state,
+                                  EventTemplateDB evtTemplate,
+                                  boolean validate)
             throws IOException,
                    EventSystemException {
 
@@ -155,7 +162,7 @@ public class EventHandlerUtil implements JournallerConstants {
         // Now read in the event
         in.readFully(eventData, 0, size);
 
-        Event e = new Event(eventData, false, evtTemplate);
+        Event e = new Event(eventData, validate, evtTemplate);
         e.setIPAddress("SenderIP", ip);
         e.setUInt16("SenderPort", port);
         e.setUInt16("SiteID", siteId);
