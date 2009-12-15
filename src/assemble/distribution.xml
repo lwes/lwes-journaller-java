@@ -1,6 +1,7 @@
 <assembly>
     <id>distribution</id>
     <formats>
+        <format>tar.gz</format>
         <format>zip</format>
     </formats>
     <dependencySets>
@@ -10,6 +11,11 @@
         </dependencySet>
     </dependencySets>
     <fileSets>
+        <fileSet>
+            <directory>target/site/apidocs</directory>
+            <outputDirectory>/apidocs</outputDirectory>
+        </fileSet>
+
         <fileSet>
             <directory>src/bin</directory>
             <outputDirectory>bin</outputDirectory>
