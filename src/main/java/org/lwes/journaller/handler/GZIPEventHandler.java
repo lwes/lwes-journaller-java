@@ -7,7 +7,9 @@ package org.lwes.journaller.handler;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lwes.Event;
+import org.lwes.EventSystemException;
 import org.lwes.journaller.DeJournaller;
+import org.lwes.journaller.event.Rotate;
 import org.lwes.journaller.util.EventHandlerUtil;
 import org.lwes.listener.DatagramQueueElement;
 
@@ -60,27 +62,54 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
      *
      * @throws IOException if there is a problem opening the file.
      */
-    protected void rotate() throws IOException {        
+    protected void rotate() throws IOException {
+        String oldfile = getFilename();
         if (out != null) {
             out.close();
         }
         generateFilename();
         createFileHandle();
+        try {
+            emit(new Rotate(System.currentTimeMillis(), getNumEvents(), oldfile));
+            setNumEvents(0);
+        }
+        catch (EventSystemException e) {
+            log.error(e.getMessage(), e);
+        }
     }
 
     public String getFileExtension() {
         return ".gz";
     }
 
+    /**
+     * This version of handleEvent is the one actually called by the journaller.
+     *
+     * @param element DatagramQueueElement containing the serialized bytes of the event.
+     * @throws IOException
+     */
     public void handleEvent(DatagramQueueElement element) throws IOException {
         synchronized (semaphore) {
             DatagramPacket packet = element.getPacket();
+            emitHealth();
             if (isRotateEvent(packet.getData()) &&
                 !tooSoonToRotate(System.currentTimeMillis())) {
                 rotate();
             }
-            else {
+            else if (!isJournallerEvent(packet.getData())) {
+                incrNumEvents();
                 ByteBuffer b = ByteBuffer.allocate(DeJournaller.MAX_HEADER_SIZE);
+                if (log.isDebugEnabled()) {
+                    try {
+                        Event e = new Event(packet.getData(), null);
+                        log.debug(e);
+                    }
+                    catch (EventSystemException e1) {
+                        log.error(e1.getMessage(), e1);
+                    }
+                    log.debug(packet.getLength() + ":" + element.getTimestamp() + ":" +
+                              packet.getAddress() + ":" + packet.getPort() + ":" + getSiteId());
+                }
                 EventHandlerUtil.writeHeader(packet.getLength(),
                                              element.getTimestamp(),
                                              packet.getAddress(),

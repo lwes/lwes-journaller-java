@@ -35,12 +35,13 @@ public class Journaller implements Runnable {
     private String multicastInterface;
     private int port = 12345;
     private int ttl = 1;
+    private int siteId = 0;
+
     private AbstractFileEventHandler eventHandler = null;
     private MulticastSocket socket = null;
     private boolean useGzip = false;
     private boolean initialized = false;
     private boolean running = true;
-    private HandlerThread handlerThread = null;
     private LinkedBlockingQueue<DatagramQueueElement> queue = new LinkedBlockingQueue();
 
     private static Options options;
@@ -53,6 +54,7 @@ public class Journaller implements Runnable {
         options.addOption("p", "port", true, "Multicast Port.");
         options.addOption("i", "interface", true, "Multicast Interface.");
         options.addOption("t", "ttl", true, "Set the Time-To-Live on the socket.");
+        options.addOption("s", "site", true, "Site ID.");
         options.addOption("h", "help", false, "Print this message.");
         options.addOption(null, "gzip", false, "Use the gzip event handler. NIO is used by default.");
     }
@@ -68,10 +70,16 @@ public class Journaller implements Runnable {
         else {
             eventHandler = new NIOEventHandler(arg);
         }
+        eventHandler.setSiteId(getSiteId());
         InetAddress address = InetAddress.getByName(getMulticastAddress());
 
         socket = new MulticastSocket(getPort());
         socket.joinGroup(address);
+
+        // If we want monitoring events *emitted* then provide the handler with the socket
+        eventHandler.setSocket(socket);
+        eventHandler.setMulticastAddr(address);
+        eventHandler.setMulticastPort(getPort());
 
         int bufSize = JournallerConstants.MAX_MSG_SIZE * 50;
         String bufSizeStr = System.getProperty("MulticastReceiveBufferSize");
@@ -91,7 +99,7 @@ public class Journaller implements Runnable {
         // Add a shutdown hook in case of kill or ^c
         Runtime.getRuntime().addShutdownHook(new ShutdownThread(eventHandler));
 
-        handlerThread = new HandlerThread();
+        HandlerThread handlerThread = new HandlerThread();
         Thread t = new Thread(handlerThread, "handler thread");
         t.setPriority(Thread.NORM_PRIORITY);
         t.start();
@@ -102,6 +110,7 @@ public class Journaller implements Runnable {
             log.info("Multicast Interface: " + getMulticastInterface());
             log.info("Multicast Port: " + getPort());
             log.info("Using event hander: " + getEventHandler().getClass().getName());
+            log.info("Site ID: "+getSiteId());
         }
 
         initialized = true;
@@ -200,6 +209,11 @@ public class Journaller implements Runnable {
             }
             if (line.hasOption("gzip")) {
                 j.setUseGzip(true);
+            }
+            if (line.hasOption("s") || line.hasOption("site")) {
+                j.setSiteId(Integer.parseInt(line.getOptionValue("s") == null ?
+                              line.getOptionValue("site") :
+                              line.getOptionValue("s")));
             }
 
             // Use one or the other for determining file name
@@ -301,5 +315,13 @@ public class Journaller implements Runnable {
 
     public void setFilePattern(String filePattern) {
         this.filePattern = filePattern;
+    }
+
+    public int getSiteId() {
+        return siteId;
+    }
+
+    public void setSiteId(int siteId) {
+        this.siteId = siteId;
     }
 }
