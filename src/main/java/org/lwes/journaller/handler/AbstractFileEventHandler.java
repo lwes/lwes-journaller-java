@@ -116,7 +116,8 @@ public abstract class AbstractFileEventHandler implements EventHandler, Datagram
 
     public void emitHealth() {
         long now = System.currentTimeMillis();
-        if ((now - lastHealthTime) > (healthInterval * 1000)) {
+        if (healthInterval > 0 &&
+            (now - lastHealthTime) > (healthInterval * 1000)) {
             try {
                 emit(new Health(now, getNumEvents(), healthInterval));
             }
@@ -133,7 +134,6 @@ public abstract class AbstractFileEventHandler implements EventHandler, Datagram
                 log.info(evt);
             }
             if (socket != null) {
-
                 byte[] bytes = evt.serialize();
                 DatagramPacket p = new DatagramPacket(bytes,
                                                       bytes.length,
