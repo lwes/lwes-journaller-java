@@ -36,6 +36,7 @@ public class Journaller implements Runnable {
     private int port = 12345;
     private int ttl = 1;
     private int siteId = 0;
+    private int healthInterval = 60;
 
     private AbstractFileEventHandler eventHandler = null;
     private MulticastSocket socket = null;
@@ -56,6 +57,7 @@ public class Journaller implements Runnable {
         options.addOption("t", "ttl", true, "Set the Time-To-Live on the socket.");
         options.addOption("s", "site", true, "Site ID.");
         options.addOption("h", "help", false, "Print this message.");
+        options.addOption(null, "health-interval", true, "Health event interval (0 to disable)");
         options.addOption(null, "gzip", false, "Use the gzip event handler. NIO is used by default.");
     }
 
@@ -77,9 +79,11 @@ public class Journaller implements Runnable {
         socket.joinGroup(address);
 
         // If we want monitoring events *emitted* then provide the handler with the socket
+        // and relevent information.
         eventHandler.setSocket(socket);
         eventHandler.setMulticastAddr(address);
         eventHandler.setMulticastPort(getPort());
+        eventHandler.setHealthInterval(getHealthInterval());
 
         int bufSize = JournallerConstants.MAX_MSG_SIZE * 50;
         String bufSizeStr = System.getProperty("MulticastReceiveBufferSize");
@@ -111,6 +115,7 @@ public class Journaller implements Runnable {
             log.info("Multicast Port: " + getPort());
             log.info("Using event hander: " + getEventHandler().getClass().getName());
             log.info("Site ID: "+getSiteId());
+            log.info("Health check interval: "+getHealthInterval());
         }
 
         initialized = true;
@@ -209,6 +214,9 @@ public class Journaller implements Runnable {
             }
             if (line.hasOption("gzip")) {
                 j.setUseGzip(true);
+            }
+            if (line.hasOption("health-interval")) {
+                j.setHealthInterval(Integer.parseInt(line.getOptionValue("health-interval")));
             }
             if (line.hasOption("s") || line.hasOption("site")) {
                 j.setSiteId(Integer.parseInt(line.getOptionValue("s") == null ?
@@ -323,5 +331,13 @@ public class Journaller implements Runnable {
 
     public void setSiteId(int siteId) {
         this.siteId = siteId;
+    }
+
+    public int getHealthInterval() {
+        return healthInterval;
+    }
+
+    public void setHealthInterval(int healthInterval) {
+        this.healthInterval = healthInterval;
     }
 }
