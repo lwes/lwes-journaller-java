@@ -13,10 +13,12 @@ import org.lwes.journaller.event.Rotate;
 import org.lwes.journaller.util.EventHandlerUtil;
 import org.lwes.listener.DatagramQueueElement;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.nio.ByteBuffer;
+import java.util.Calendar;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -49,6 +51,19 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
      * @throws IOException if there is a problem opening a handle to the file.
      */
     protected void createFileHandle() throws IOException {
+        File newFile = new File(getFilename());
+        if (newFile.exists()) {
+            Calendar c = Calendar.getInstance();
+            StringBuilder buf = new StringBuilder()
+                    .append(c.get(Calendar.YEAR)).append(c.get(Calendar.MONTH))
+                    .append(c.get(Calendar.DAY_OF_MONTH)).append(c.get(Calendar.HOUR_OF_DAY))
+                    .append(c.get(Calendar.MINUTE))
+                    .append(getFilename());
+            boolean succeeded = newFile.renameTo(new File(buf.toString()));
+            if (!succeeded) {
+                log.error("File rename failed. "+newFile.getAbsolutePath());
+            }
+        }
         out = new GZIPOutputStream(new FileOutputStream(getFilename(), true));
         if (log.isDebugEnabled()) {
             log.debug("Created a new log file: " + getFilename());
