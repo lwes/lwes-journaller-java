@@ -28,7 +28,7 @@ public abstract class AbstractFileEventHandler implements EventHandler, Datagram
 
     private int siteId = 0;
     private long rotateGracePeriod = 1000 * 30; // 30 seconds
-    private long lastRotateTimestamp = 0;
+    protected long lastRotateTimestamp = 0;
     private static final byte[] ROTATE = "Command::Rotate".getBytes();
     private static final byte[] JOURNALLER = "Journaller::".getBytes();
 
@@ -109,7 +109,6 @@ public abstract class AbstractFileEventHandler implements EventHandler, Datagram
             return true;
         }
         else {
-            lastRotateTimestamp = time;
             return false;
         }
     }

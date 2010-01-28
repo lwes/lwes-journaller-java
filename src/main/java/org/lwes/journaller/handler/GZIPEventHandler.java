@@ -54,6 +54,7 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
         File newFile = new File(getFilename());
         if (newFile.exists()) {
             Calendar c = Calendar.getInstance();
+            // TODO I don't like this...
             StringBuilder buf = new StringBuilder()
                     .append(c.get(Calendar.YEAR)).append(c.get(Calendar.MONTH))
                     .append(c.get(Calendar.DAY_OF_MONTH)).append(c.get(Calendar.HOUR_OF_DAY))
@@ -61,7 +62,7 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
                     .append(getFilename());
             boolean succeeded = newFile.renameTo(new File(buf.toString()));
             if (!succeeded) {
-                log.error("File rename failed. "+newFile.getAbsolutePath());
+                log.error("File rename failed. " + newFile.getAbsolutePath());
             }
         }
         out = new GZIPOutputStream(new FileOutputStream(getFilename(), true));
@@ -106,25 +107,19 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
     public void handleEvent(DatagramQueueElement element) throws IOException {
         synchronized (semaphore) {
             DatagramPacket packet = element.getPacket();
+            long ts = System.currentTimeMillis();
             emitHealth();
+            // If we get a rotate event, it is from the local host and it
+            // isn't too soon since the last one then rotate the log.
             if (isRotateEvent(packet.getData()) &&
-                !tooSoonToRotate(System.currentTimeMillis())) {
+                !tooSoonToRotate(ts) &&
+                "/127.0.0.1".equals(packet.getAddress().toString())) {
+                lastRotateTimestamp = ts;
                 rotate();
             }
             else if (!isJournallerEvent(packet.getData())) {
                 incrNumEvents();
                 ByteBuffer b = ByteBuffer.allocate(DeJournaller.MAX_HEADER_SIZE);
-                if (log.isDebugEnabled()) {
-                    try {
-                        Event e = new Event(packet.getData(), null);
-                        log.debug(e);
-                    }
-                    catch (EventSystemException e1) {
-                        log.error(e1.getMessage(), e1);
-                    }
-                    log.debug(packet.getLength() + ":" + element.getTimestamp() + ":" +
-                              packet.getAddress() + ":" + packet.getPort() + ":" + getSiteId());
-                }
                 EventHandlerUtil.writeHeader(packet.getLength(),
                                              element.getTimestamp(),
                                              packet.getAddress(),
