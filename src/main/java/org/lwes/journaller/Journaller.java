@@ -43,7 +43,7 @@ public class Journaller implements Runnable {
     private boolean useGzip = false;
     private boolean initialized = false;
     private boolean running = true;
-    private LinkedBlockingQueue<DatagramQueueElement> queue = new LinkedBlockingQueue();
+    private LinkedBlockingQueue<DatagramQueueElement> queue = new LinkedBlockingQueue(5000);
 
     private static Options options;
 
