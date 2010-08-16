@@ -4,10 +4,6 @@ You will need to install maven 2.x in order to build:
 
 % mvn clean package
 
-To create the distribution package:
-
-% mvn assembly:assembly
-
 Running
 
 To start the journaller:
@@ -36,3 +32,9 @@ You can also increase the read buffer on the multicast socket by setting the lwe
 system property MulticastReceiveBufferSize. For example,
 
 java -DMulticastReceiveBufferSize=8388608 ...
+
+There is a dejournaller utility to view the contents of the files. To run this:
+
+% java -jar dejournaller-[version].jar -f <file_name> [-g]
+
+It will output events one per line so you can grep/awk/perl them.
