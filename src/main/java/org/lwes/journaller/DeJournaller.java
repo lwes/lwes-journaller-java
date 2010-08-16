@@ -117,9 +117,7 @@ public class DeJournaller implements Runnable, JournallerConstants {
      * @param event
      */
     public void handleEvent(Event event) {
-        if (log.isDebugEnabled()) {
-            log.debug("EVENT: " + event);
-        }
+        System.out.println(event.toOneLineString());
     }
 
     public static void main(String[] args) {
@@ -131,7 +129,7 @@ public class DeJournaller implements Runnable, JournallerConstants {
 
             if (line.hasOption("h") || line.hasOption("help")) {
                 HelpFormatter formatter = new HelpFormatter();
-                formatter.printHelp("lwes-journaller", options);
+                formatter.printHelp("dejournaller", options);
                 Runtime.getRuntime().exit(1);
             }
             if (line.hasOption("f") || line.hasOption("file")) {
