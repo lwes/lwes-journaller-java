@@ -1,0 +1,13 @@
+=== Version 0.0.7 ===
+* Journaller will now emit a couple of events that can be used to monitor it's health.
+** Journaller::Health -- emitted when a message is received and enough time has elapsed since
+the last one. Contains the timestamp, the number of events emitted and the interval at which
+to expect these messages.
+** Journaller::Rotate -- emitted when the journaller rotates the file it is using to archive
+events. Contains the timestamp, file name, and the number of events in the file.
+* Added a command line option to specify the site id to use.
+
+=== Version 0.0.6 ===
+* Internal queue changed so the events are written to file in the order in which they were
+received. (This was actually in lwes-java)
+* Allow pass in of a filename pattern so one can take advantage of date and hostname elements.
