@@ -23,7 +23,7 @@
         <dependency>
             <groupId>org.lwes</groupId>
             <artifactId>lwes-java</artifactId>
-            <version>0.2.0</version>
+            <version>0.2.2</version>
         </dependency>
         <dependency>
             <groupId>log4j</groupId>
@@ -101,17 +101,34 @@
             </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <configuration>
-                    <descriptors>
-                        <descriptor>src/assemble/distribution.xml</descriptor>
-                    </descriptors>
-                </configuration>
+                <version>2.2-beta-5</version>
                 <executions>
                     <execution>
+                        <id>distribution</id>
                         <phase>package</phase>
-                        <goals>
-                            <goal>assembly</goal>
-                        </goals>
+                        <goals><goal>single</goal></goals>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>src/assemble/distribution.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>executable-jar</id>
+                        <phase>package</phase>
+                        <goals><goal>single</goal></goals>
+                        <configuration>
+                            <appendAssemblyId>false</appendAssemblyId>
+                            <finalName>dejournaller-${project.version}</finalName>
+                            <descriptorRefs>
+                                <descriptorRef>jar-with-dependencies</descriptorRef>
+                            </descriptorRefs>
+                            <archive>
+                                <manifest>
+                                    <mainClass>org.lwes.journaller.DeJournaller</mainClass>
+                                </manifest>
+                            </archive>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -137,10 +154,10 @@
                 <version>2.3</version>
             </plugin>
             <plugin>
-              <groupId>org.codehaus.mojo</groupId>
-              <artifactId>emma-maven-plugin</artifactId>
-              <version>1.0-alpha-2</version>
-              <inherited>true</inherited>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>emma-maven-plugin</artifactId>
+                <version>1.0-alpha-2</version>
+                <inherited>true</inherited>
             </plugin>
         </plugins>
     </reporting>
