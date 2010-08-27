@@ -7,13 +7,11 @@ package org.lwes.journaller;
  * Date: Apr 16, 2009
  */
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.PosixParser;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.kohsuke.args4j.CmdLineException;
+import org.kohsuke.args4j.CmdLineParser;
+import org.kohsuke.args4j.Option;
 import org.lwes.Event;
 import org.lwes.db.EventTemplateDB;
 import org.lwes.journaller.util.EventHandlerUtil;
@@ -27,23 +25,19 @@ import java.io.IOException;
 import java.util.zip.GZIPInputStream;
 
 public class DeJournaller implements Runnable, JournallerConstants {
-    private transient Log log = LogFactory.getLog(DeJournaller.class);
+    private static transient Log log = LogFactory.getLog(DeJournaller.class);
 
+    @Option(name = "-g", aliases = "--gzipped")
     private boolean gzipped;
+
+    @Option(name = "-f", aliases = "--file")
     private String fileName;
+
+    @Option(name = "-e", aliases = "--esf-file")
     private String esfFile;
+
+    @Option(name = "-v", aliases = "validate")
     private boolean validate = false;
-
-    protected static Options options;
-
-    static {
-        options = new Options();
-        options.addOption("f", "file", true, "File to read events from.");
-        options.addOption("e", "esf-file", true, "Event definition file.");
-        options.addOption("h", "help", false, "Print this message.");
-        options.addOption("g", "gzipped", false, "Event log is gzipped.");
-        options.addOption("v", "validate", false, "Validate events");
-    }
 
     public DeJournaller() {
     }
@@ -97,7 +91,6 @@ public class DeJournaller implements Runnable, JournallerConstants {
             }
             done();
         }
-
     }
 
     /**
@@ -120,41 +113,20 @@ public class DeJournaller implements Runnable, JournallerConstants {
         System.out.println(event.toOneLineString());
     }
 
-    public static void main(String[] args) {
+    protected void parseArguments(String[] args) throws CmdLineException {
+        CmdLineParser parser = new CmdLineParser(this);
+        parser.parseArgument(args);
+    }
 
+    public static void main(String[] args) {
         DeJournaller dj = new DeJournaller();
         try {
-            CommandLineParser parser = new PosixParser();
-            CommandLine line = parser.parse(options, args);
-
-            if (line.hasOption("h") || line.hasOption("help")) {
-                HelpFormatter formatter = new HelpFormatter();
-                formatter.printHelp("dejournaller", options);
-                Runtime.getRuntime().exit(1);
-            }
-            if (line.hasOption("f") || line.hasOption("file")) {
-                dj.setFileName(line.getOptionValue("f") == null ?
-                               line.getOptionValue("file") :
-                               line.getOptionValue("f"));
-            }
-            if (line.hasOption("e") || line.hasOption("esf-file")) {
-                dj.setEsfFile(line.getOptionValue("e") == null ?
-                              line.getOptionValue("esf-file") :
-                              line.getOptionValue("e"));
-            }
-            if (line.hasOption("g") || line.hasOption("gzipped")) {
-                dj.setGzipped(true);
-            }
-            if (line.hasOption("v") || line.hasOption("validate")) {
-                dj.setValidate(true);
-            }
-
-            dj.run();
+            dj.parseArguments(args);
         }
-        catch (Exception e) {
-            e.printStackTrace();
-            Runtime.getRuntime().exit(1);
+        catch (CmdLineException e) {
+            log.error(e.getMessage(), e);
         }
+        dj.run();
     }
 
     public String getFileName() {

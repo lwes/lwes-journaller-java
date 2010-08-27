@@ -9,7 +9,6 @@ import org.lwes.Event;
 import org.lwes.EventSystemException;
 import org.lwes.journaller.event.Health;
 import org.lwes.journaller.util.FilenameFormatter;
-import org.lwes.listener.EventHandler;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -17,7 +16,7 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.util.Calendar;
 
-public abstract class AbstractFileEventHandler implements EventHandler, DatagramQueueElementHandler {
+public abstract class AbstractFileEventHandler implements DatagramQueueElementHandler {
 
     private static transient Log log = LogFactory.getLog(AbstractFileEventHandler.class);
 

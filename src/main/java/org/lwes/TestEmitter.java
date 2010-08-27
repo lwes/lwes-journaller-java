@@ -4,42 +4,48 @@ package org.lwes;
  * Date: Apr 20, 2009
  */
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.PosixParser;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.kohsuke.args4j.Option;
 import org.lwes.emitter.MulticastEventEmitter;
 
+import java.io.IOException;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 public class TestEmitter extends MulticastEventEmitter implements Runnable {
 
     private static transient Log log = LogFactory.getLog(TestEmitter.class);
 
+    @Option(name="-m", aliases = "--multicast-address")
+    private String multicastAddr;
+
+    @Option(name="-p", aliases="--port")
+    private int port;
+
+    @Option(name="-i", aliases = "--interface")
+    private String multicastInterface;
+
+    @Option(name="-t", aliases = "--ttl")
+    private int ttl = -1;
+
+    @Option(name = "-n", aliases = "--number")
     private int number = 1;
+
+    @Option(name = "-s", aliases = "--seconds")
     private int seconds = 1;
+
+    @Option(name = "-b", aliases = "--break")
     private int breakSeconds = 0;
+
+    @Option(name = "-r", aliases = "--rotate")
     private boolean sendRotate = false;
 
-    private static Options options;
-
-    static {
-        options = new Options();
-        options.addOption("m", "multicast-address", true, "Multicast address.");
-        options.addOption("p", "port", true, "Multicast Port.");
-        options.addOption("i", "interface", true, "Multicast Interface.");
-        options.addOption("e", "esf-file", true, "Event definition file.");
-        options.addOption("n", "number", true, "Number of events per second to emit.");
-        options.addOption("s", "seconds", true, "Number of seconds to emit events.");
-        options.addOption("b", "break", true, "Number of seconds to break between event bursts.");
-        options.addOption("r", "rotate", false, "Send a Command::Rotate event.");
-        options.addOption("t", "ttl", true, "Set the time to live value on the socket");
-        options.addOption("h", "help", false, "Print this message.");
+    @Override
+    public void initialize() throws IOException {
+        setMulticastAddress(InetAddress.getByName(multicastAddr));
+        setMulticastPort(port);
+        setTimeToLive(ttl);
+        super.initialize();
     }
 
     public void run() {
@@ -55,7 +61,7 @@ public class TestEmitter extends MulticastEventEmitter implements Runnable {
                 for (int i = 0; i < getSeconds(); i++) {
                     for (int j = 0; j < getNumber(); j++) {
                         Event evt = createEvent("MyEvent", false);
-                        evt.setString("field", "Testing-"+i+"-"+j);
+                        evt.setString("field", "Testing-" + i + "-" + j);
                         evt.setInt32("count", j);
                         evt.setInt32("num", i);
                         emit(evt);
@@ -72,71 +78,8 @@ public class TestEmitter extends MulticastEventEmitter implements Runnable {
     }
 
     public static void main(String[] args) {
-
         TestEmitter te = new TestEmitter();
-        try {
-            CommandLineParser parser = new PosixParser();
-            CommandLine line = parser.parse(options, args);
-
-            if (line.hasOption("h") || line.hasOption("help")) {
-                HelpFormatter formatter = new HelpFormatter();
-                formatter.printHelp("lwes-journaller", options);
-                Runtime.getRuntime().exit(1);
-            }
-            if (line.hasOption("m") || line.hasOption("multicast-address")) {
-                te.setMulticastAddress(InetAddress.getByName(line.getOptionValue("m") == null ?
-                                                             line.getOptionValue("multicast-address") :
-                                                             line.getOptionValue("m")));
-            }
-            if (line.hasOption("p") || line.hasOption("port")) {
-                te.setMulticastPort(Integer.parseInt(line.getOptionValue("p") == null ?
-                                                     line.getOptionValue("port") :
-                                                     line.getOptionValue("p")));
-            }
-            if (line.hasOption("i") || line.hasOption("interface")) {
-                te.setInterface(InetAddress.getByName(line.getOptionValue("i") == null ?
-                                                      line.getOptionValue("interface") :
-                                                      line.getOptionValue("i")));
-            }
-            if (line.hasOption("r") || line.hasOption("rotate")) {
-                te.setSendRotate(true);
-            }
-            if (line.hasOption("e") || line.hasOption("esf-file")) {
-                te.setESFFilePath(line.getOptionValue("e") == null ?
-                                  line.getOptionValue("esf-file") :
-                                  line.getOptionValue("e"));
-            }
-            if (line.hasOption("n") || line.hasOption("number")) {
-                te.setNumber(Integer.parseInt((line.getOptionValue("n") == null ?
-                                               line.getOptionValue("number") :
-                                               line.getOptionValue("n"))));
-            }
-            if (line.hasOption("b") || line.hasOption("break")) {
-                te.setBreakSeconds(Integer.parseInt((line.getOptionValue("b") == null ?
-                                                     line.getOptionValue("break") :
-                                                     line.getOptionValue("b"))));
-            }
-            if (line.hasOption("s") || line.hasOption("seconds")) {
-                te.setSeconds(Integer.parseInt((line.getOptionValue("s") == null ?
-                                                line.getOptionValue("seconds") :
-                                                line.getOptionValue("s"))));
-            }
-            if (line.hasOption("t") || line.hasOption("ttl")) {
-                te.setTimeToLive(Integer.parseInt((line.getOptionValue("t") == null ?
-                                                line.getOptionValue("ttl") :
-                                                line.getOptionValue("t"))));
-            }
-            te.run();
-        }
-        catch (NumberFormatException e) {
-            log.error(e);
-        }
-        catch (UnknownHostException e) {
-            log.error(e);
-        }
-        catch (ParseException e) {
-            log.error(e);
-        }
+        te.run();
     }
 
     public boolean isSendRotate() {
@@ -169,5 +112,37 @@ public class TestEmitter extends MulticastEventEmitter implements Runnable {
 
     public void setBreakSeconds(int breakSeconds) {
         this.breakSeconds = breakSeconds;
+    }
+
+    public String getMulticastAddr() {
+        return multicastAddr;
+    }
+
+    public void setMulticastAddr(String multicastAddress) {
+        this.multicastAddr = multicastAddress;
+    }
+
+    public String getMulticastInterface() {
+        return multicastInterface;
+    }
+
+    public void setMulticastInterface(String multicastInterface) {
+        this.multicastInterface = multicastInterface;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
+    }
+
+    public int getTtl() {
+        return ttl;
+    }
+
+    public void setTtl(int ttl) {
+        this.ttl = ttl;
     }
 }

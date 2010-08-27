@@ -4,18 +4,16 @@ package org.lwes.journaller;
  * Date: Apr 14, 2009
  */
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.PosixParser;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.kohsuke.args4j.CmdLineException;
+import org.kohsuke.args4j.CmdLineParser;
+import org.kohsuke.args4j.Option;
 import org.lwes.EventSystemException;
 import org.lwes.journaller.handler.AbstractFileEventHandler;
 import org.lwes.journaller.handler.GZIPEventHandler;
 import org.lwes.journaller.handler.NIOEventHandler;
+import org.lwes.journaller.handler.SequenceFileHandler;
 import org.lwes.listener.DatagramQueueElement;
 
 import java.io.IOException;
@@ -29,37 +27,41 @@ public class Journaller implements Runnable {
 
     private static transient Log log = LogFactory.getLog(Journaller.class);
 
+    @Option(name = "-f", aliases = "--file")
     private String fileName;
+
+    @Option(name = "-l", aliases = "--file-pattern")
     private String filePattern;
+
+    @Option(name = "-m", aliases = "--multicast-address")
     private String multicastAddress = "224.1.1.11";
+
+    @Option(name = "i", aliases = "--multicast-interface")
     private String multicastInterface;
+
+    @Option(name = "-p", aliases = "--port")
     private int port = 12345;
+
+    @Option(name = "-t", aliases = "--ttl")
     private int ttl = 1;
+
+    @Option(name = "-s", aliases = "--site")
     private int siteId = 0;
+
+    @Option(name = "--health-interval")
     private int healthInterval = 60;
+
+    @Option(name = "--gzip")
+    private boolean useGzip = false;
+
+    @Option(name = "--sequence")
+    private boolean useSequence = false;
 
     private AbstractFileEventHandler eventHandler = null;
     private MulticastSocket socket = null;
-    private boolean useGzip = false;
     private boolean initialized = false;
     private boolean running = true;
     private LinkedBlockingQueue<DatagramQueueElement> queue = new LinkedBlockingQueue(5000);
-
-    private static Options options;
-
-    static {
-        options = new Options();
-        options.addOption("f", "file", true, "File to write events to.");
-        options.addOption("l", "file-pattern", true, "Pattern to use for file name.");
-        options.addOption("m", "multicast-address", true, "Multicast address.");
-        options.addOption("p", "port", true, "Multicast Port.");
-        options.addOption("i", "interface", true, "Multicast Interface.");
-        options.addOption("t", "ttl", true, "Set the Time-To-Live on the socket.");
-        options.addOption("s", "site", true, "Site ID.");
-        options.addOption("h", "help", false, "Print this message.");
-        options.addOption(null, "health-interval", true, "Health event interval (0 to disable)");
-        options.addOption(null, "gzip", false, "Use the gzip event handler. NIO is used by default.");
-    }
 
     public Journaller() {
     }
@@ -68,6 +70,9 @@ public class Journaller implements Runnable {
         String arg = getFileName() == null ? getFilePattern() : getFileName();
         if (useGzip) {
             eventHandler = new GZIPEventHandler(arg);
+        }
+        else if (useSequence) {
+            eventHandler = new SequenceFileHandler(arg);
         }
         else {
             eventHandler = new NIOEventHandler(arg);
@@ -114,8 +119,8 @@ public class Journaller implements Runnable {
             log.info("Multicast Interface: " + getMulticastInterface());
             log.info("Multicast Port: " + getPort());
             log.info("Using event hander: " + getEventHandler().getClass().getName());
-            log.info("Site ID: "+getSiteId());
-            log.info("Health check interval: "+getHealthInterval());
+            log.info("Site ID: " + getSiteId());
+            log.info("Health check interval: " + getHealthInterval());
         }
 
         initialized = true;
@@ -126,7 +131,6 @@ public class Journaller implements Runnable {
     }
 
     public void run() {
-
         try {
             if (!initialized) {
                 initialize();
@@ -180,71 +184,20 @@ public class Journaller implements Runnable {
         }
     }
 
+    protected void parseArguments(String[] args) throws CmdLineException {
+        CmdLineParser parser = new CmdLineParser(this);
+        parser.parseArgument(args);
+    }
+
     public static void main(String[] args) {
         Journaller j = new Journaller();
-
         try {
-            CommandLineParser parser = new PosixParser();
-            CommandLine line = parser.parse(options, args);
-
-            if (line.hasOption("h") || line.hasOption("help")) {
-                HelpFormatter formatter = new HelpFormatter();
-                formatter.printHelp("lwes-journaller", options);
-                Runtime.getRuntime().exit(1);
-            }
-            if (line.hasOption("m") || line.hasOption("multicast-address")) {
-                j.setMulticastAddress(line.getOptionValue("m") == null ?
-                                      line.getOptionValue("multicast-address") :
-                                      line.getOptionValue("m"));
-            }
-            if (line.hasOption("p") || line.hasOption("port")) {
-                j.setPort(Integer.parseInt(line.getOptionValue("p") == null ?
-                                           line.getOptionValue("port") :
-                                           line.getOptionValue("p")));
-            }
-            if (line.hasOption("i") || line.hasOption("interface")) {
-                j.setMulticastInterface(line.getOptionValue("i") == null ?
-                                        line.getOptionValue("interface") :
-                                        line.getOptionValue("i"));
-            }
-            if (line.hasOption("t") || line.hasOption("ttl")) {
-                j.setTtl(Integer.parseInt(line.getOptionValue("t") == null ?
-                                          line.getOptionValue("ttl") :
-                                          line.getOptionValue("t")));
-            }
-            if (line.hasOption("gzip")) {
-                j.setUseGzip(true);
-            }
-            if (line.hasOption("health-interval")) {
-                j.setHealthInterval(Integer.parseInt(line.getOptionValue("health-interval")));
-            }
-            if (line.hasOption("s") || line.hasOption("site")) {
-                j.setSiteId(Integer.parseInt(line.getOptionValue("s") == null ?
-                              line.getOptionValue("site") :
-                              line.getOptionValue("s")));
-            }
-
-            // Use one or the other for determining file name
-            if (line.hasOption("l") || line.hasOption("file-pattern")) {
-                String pat = line.getOptionValue("l") == null ?
-                             line.getOptionValue("file-pattern") :
-                             line.getOptionValue("l");
-                j.setFilePattern(pat);
-            }
-            else if (line.hasOption("f") || line.hasOption("file")) {
-                j.setFileName(line.getOptionValue("f") == null ?
-                              line.getOptionValue("file") :
-                              line.getOptionValue("f"));
-            }
-
-            j.run();
+            j.parseArguments(args);
         }
-        catch (NumberFormatException e) {
-            log.error(e);
+        catch (CmdLineException e) {
+            log.error(e.getMessage(), e);
         }
-        catch (ParseException e) {
-            log.error(e);
-        }
+        j.run();
     }
 
     class ShutdownThread extends Thread {
@@ -258,6 +211,7 @@ public class Journaller implements Runnable {
         public void run() {
             log.debug("shutdown thread run()");
             eventHandler.destroy();
+            shutdown();
         }
     }
 
@@ -339,5 +293,13 @@ public class Journaller implements Runnable {
 
     public void setHealthInterval(int healthInterval) {
         this.healthInterval = healthInterval;
+    }
+
+    public boolean isUseSequence() {
+        return useSequence;
+    }
+
+    public void setUseSequence(boolean useSequence) {
+        this.useSequence = useSequence;
     }
 }
