@@ -28,4 +28,8 @@ public class MockSequenceDeJournaller extends SequenceDejournaller {
     public void setEventList(List<Event> eventList) {
         this.eventList = eventList;
     }
+
+    public void clear() {
+        eventList.clear();
+    }
 }
