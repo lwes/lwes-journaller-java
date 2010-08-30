@@ -108,8 +108,9 @@ public class FilenameFormatter {
          * @return
          */
         public String toString() {
-            log.debug("calendar: " + calendar.getTime());
             switch (modifier) {
+                case DateTime.MILLISECOND:
+                    return pad(calendar.get(Calendar.MILLISECOND));
                 case DateTime.HOUR_OF_DAY_0:
                     return pad(calendar.get(Calendar.HOUR_OF_DAY));
                 case DateTime.MINUTE:
