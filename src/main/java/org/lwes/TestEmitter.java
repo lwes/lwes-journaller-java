@@ -6,6 +6,8 @@ package org.lwes;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.kohsuke.args4j.CmdLineException;
+import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.lwes.emitter.MulticastEventEmitter;
 
@@ -26,7 +28,7 @@ public class TestEmitter extends MulticastEventEmitter implements Runnable {
     private String multicastInterface;
 
     @Option(name="-t", aliases = "--ttl")
-    private int ttl = -1;
+    private int ttl = 1;
 
     @Option(name = "-n", aliases = "--number")
     private int number = 1;
@@ -77,8 +79,19 @@ public class TestEmitter extends MulticastEventEmitter implements Runnable {
 
     }
 
+    protected void parseArguments(String[] args) throws CmdLineException {
+        CmdLineParser parser = new CmdLineParser(this);
+        parser.parseArgument(args);
+    }
+
     public static void main(String[] args) {
         TestEmitter te = new TestEmitter();
+        try {
+            te.parseArguments(args);
+        }
+        catch (CmdLineException e) {
+            log.error(e.getMessage(), e);
+        }
         te.run();
     }
 
