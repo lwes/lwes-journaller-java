@@ -85,7 +85,9 @@ public class SequenceFileHandler extends AbstractFileEventHandler implements Jou
             Event event = null;
             try {
                 event = new Event(packet.getData(), false, eventTemplate);
-
+                if (!event.containsKey("enc")) {
+                    event.setInt16(Event.ENCODING, Event.DEFAULT_ENCODING);                    
+                }
                 event.setIPAddress(JournallerConstants.SENDER_IP, packet.getAddress());
                 event.setUInt16(JournallerConstants.SENDER_PORT, packet.getPort());
                 event.setUInt16(JournallerConstants.SITE_ID, getSiteId());
