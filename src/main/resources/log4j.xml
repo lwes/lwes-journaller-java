@@ -20,6 +20,10 @@
         </layout>
     </appender>
 
+    <category name="org.apache.hadoop" >
+        <priority value="ERROR"/>
+    </category>
+
     <category name="org.lwes.journaller.CountDeJournaller">
         <priority value="INFO"/>
         <appender-ref ref="CONSOLE"/>
