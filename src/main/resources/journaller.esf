@@ -1,0 +1,16 @@
+# Events the journaller will emit for monitoring purposes.
+
+# An event the journaller emits to indicate it is running.
+Journaller::Health {
+  uint64 ts;       # timestamp.
+  uint64 num;      # number of events captured since last rotate.
+  int32  interval; # interval at which you will see these events in seconds.
+}
+
+# Indicates that the current journal file was rotated and how many events
+# it thinks are in there.
+Journaller::Rotate {
+  uint64 ts;       # timestamp.
+  uint64 num;      # number of events captured since last rotate.
+  string filename; # the old file.
+}
