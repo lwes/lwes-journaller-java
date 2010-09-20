@@ -48,6 +48,9 @@ public class Journaller implements Runnable {
     @Option(name = "-s", aliases = "--site")
     private int siteId = 0;
 
+    @Option(name = "-q", aliases = "--queue-size")
+    private int queueSize = 5000;
+
     @Option(name = "--health-interval")
     private int healthInterval = 60;
 
@@ -61,7 +64,7 @@ public class Journaller implements Runnable {
     private MulticastSocket socket = null;
     private boolean initialized = false;
     private boolean running = true;
-    private LinkedBlockingQueue<DatagramQueueElement> queue = new LinkedBlockingQueue(5000);
+    private LinkedBlockingQueue<DatagramQueueElement> queue = null;
 
     public Journaller() {
     }
@@ -77,9 +80,10 @@ public class Journaller implements Runnable {
         else {
             eventHandler = new NIOEventHandler(arg);
         }
-        eventHandler.setSiteId(getSiteId());
-        InetAddress address = InetAddress.getByName(getMulticastAddress());
 
+        queue = new LinkedBlockingQueue<DatagramQueueElement>(queueSize);
+
+        InetAddress address = InetAddress.getByName(getMulticastAddress());
         socket = new MulticastSocket(getPort());
         socket.joinGroup(address);
 
@@ -89,6 +93,7 @@ public class Journaller implements Runnable {
         eventHandler.setMulticastAddr(address);
         eventHandler.setMulticastPort(getPort());
         eventHandler.setHealthInterval(getHealthInterval());
+        eventHandler.setSiteId(getSiteId());
 
         int bufSize = JournallerConstants.MAX_MSG_SIZE * 50;
         String bufSizeStr = System.getProperty("MulticastReceiveBufferSize");
