@@ -8,13 +8,14 @@ package org.lwes.journaller;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 import org.lwes.EventSystemException;
 import org.lwes.journaller.handler.NIOEventHandler;
 
 import java.net.UnknownHostException;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class BaseFileEventHandlerTest extends BaseJournallerTest {
 
@@ -27,7 +28,7 @@ public class BaseFileEventHandlerTest extends BaseJournallerTest {
 
         NIOEventHandler handler = new NIOEventHandler();
         assertTrue(handler.isRotateEvent(createRotateEvent().serialize()));
-        assertFalse(handler.isRotateEvent(createTestEvent().serialize()));
+        assertFalse(handler.isRotateEvent(createTestEvent().getPacket().getData()));
     }
 
 }

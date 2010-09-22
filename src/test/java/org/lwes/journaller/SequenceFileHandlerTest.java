@@ -54,7 +54,8 @@ public class SequenceFileHandlerTest extends TestCase {
         handler.handleEvent(createTestEvent());
         handler.handleEvent(createTestEvent());
         Thread.sleep(1000);
-        handler.handleEvent(createRotateEvent());
+        boolean rotated = handler.rotate();
+        assertTrue(rotated);
 
         MockSequenceDeJournaller mdj = new MockSequenceDeJournaller();
         mdj.setFileName(generatedFile1);
@@ -89,22 +90,6 @@ public class SequenceFileHandlerTest extends TestCase {
             assertNotNull(evt.getInt64(JournallerConstants.RECEIPT_TIME));
             assertEquals(256, (int) evt.getInt32("intField1"));
         }
-    }
-
-    private DatagramQueueElement createRotateEvent()
-        throws EventSystemException,
-               UnknownHostException {
-
-        EventTemplateDB evtDb = new EventTemplateDB();
-        evtDb.initialize();
-        Event evt = new Event("Command::Rotate", false, evtDb);
-
-        DatagramQueueElement dqe = new DatagramQueueElement();
-        byte[] data = evt.serialize();
-        dqe.setPacket(new DatagramPacket(data, data.length, InetAddress.getByName("127.0.0.1"), 9191));
-        dqe.setTimestamp(System.currentTimeMillis());
-
-        return dqe;
     }
 
     private DatagramQueueElement createTestEvent()

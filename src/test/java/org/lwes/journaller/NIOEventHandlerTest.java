@@ -7,41 +7,30 @@ package org.lwes.journaller;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import org.junit.Test;
 import org.lwes.Event;
 import org.lwes.EventSystemException;
 import org.lwes.journaller.handler.NIOEventHandler;
-import org.lwes.journaller.util.EventHandlerUtil;
-import org.lwes.listener.DatagramQueueElement;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.nio.ByteBuffer;
 import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class NIOEventHandlerTest extends BaseJournallerTest {
     private transient Log log = LogFactory.getLog(NIOEventHandlerTest.class);
 
+    @Test
     public void testDatagramPacket()
             throws IOException, EventSystemException {
 
         NIOEventHandler handler = new NIOEventHandler("target/junit-nio-%tH%tM%tS");
         String generatedFile1 = handler.getFilename();
         for (int i = 0; i < 10; i++) {
-            Event evt = createTestEvent();
-            byte[] b1 = evt.serialize();
-            byte[] bytes = new byte[b1.length + JournallerConstants.MAX_HEADER_SIZE];
-            ByteBuffer buf = ByteBuffer.wrap(bytes);
-            EventHandlerUtil.writeEvent(evt, buf);
-            DatagramPacket p = new DatagramPacket(bytes, bytes.length);
-            p.setData(bytes);
-            DatagramQueueElement element = new DatagramQueueElement();
-            element.setPacket(p);
-            element.setTimestamp(System.currentTimeMillis());
-            handler.handleEvent(element);
+            handler.handleEvent(createTestEvent());
         }
 
         MockDeJournaller mdj = new MockDeJournaller();
@@ -67,8 +56,7 @@ public class NIOEventHandlerTest extends BaseJournallerTest {
      * the handler then verify the events in the rotated file.
      */
     @Test
-    public void testHandler()
-            throws IOException, EventSystemException {
+    public void testHandler() throws IOException, EventSystemException {
 
         NIOEventHandler handler = new NIOEventHandler("target/junit-nio-%tH%tM%tS");
         String generatedFile1 = handler.getFilename();
@@ -81,7 +69,7 @@ public class NIOEventHandlerTest extends BaseJournallerTest {
         catch (InterruptedException e) {
             log.error(e.getMessage(), e);
         }
-        handler.handleEvent(createRotateEvent());
+        handler.rotate();
 
         MockDeJournaller mdj = new MockDeJournaller();
         mdj.setFileName(generatedFile1);
@@ -96,7 +84,7 @@ public class NIOEventHandlerTest extends BaseJournallerTest {
         assertEquals("Number of events is wrong", 10, eventList.size());
         File f = new File(generatedFile1);
         if (f.exists()) {
-            f.delete();
+            assertTrue(f.delete());
         }
 
         String generatedFile2 = handler.getFilename();
@@ -112,7 +100,7 @@ public class NIOEventHandlerTest extends BaseJournallerTest {
         assertEquals("Number of events is wrong", 10, eventList.size());
         f = new File(generatedFile2);
         if (f.exists()) {
-            f.delete();
+            assertTrue(f.delete());
         }
     }
 

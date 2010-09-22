@@ -16,14 +16,22 @@ import org.lwes.journaller.handler.NIOEventHandler;
 import org.lwes.journaller.handler.SequenceFileHandler;
 import org.lwes.listener.DatagramQueueElement;
 
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ManagedAttribute;
+import javax.management.NotCompliantMBeanException;
+import javax.management.ObjectName;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-public class Journaller implements Runnable {
+public class Journaller implements Runnable, JournallerMBean {
 
     private static transient Log log = LogFactory.getLog(Journaller.class);
 
@@ -49,7 +57,7 @@ public class Journaller implements Runnable {
     private int siteId = 0;
 
     @Option(name = "-q", aliases = "--queue-size")
-    private int queueSize = 5000;
+    private int queueSize = 8000;
 
     @Option(name = "--health-interval")
     private int healthInterval = 60;
@@ -65,6 +73,7 @@ public class Journaller implements Runnable {
     private boolean initialized = false;
     private boolean running = true;
     private LinkedBlockingQueue<DatagramQueueElement> queue = null;
+    private MBeanServer mbs = null;
 
     public Journaller() {
     }
@@ -79,6 +88,25 @@ public class Journaller implements Runnable {
         }
         else {
             eventHandler = new NIOEventHandler(arg);
+        }
+
+        mbs = ManagementFactory.getPlatformMBeanServer();
+        try {
+            ObjectName name = new ObjectName("org.lwes:name=Journaller");
+            mbs.registerMBean(this, name);
+            mbs.registerMBean(eventHandler, eventHandler.getObjectName());
+        }
+        catch (MalformedObjectNameException e) {
+            log.error(e.getMessage(), e);
+        }
+        catch (NotCompliantMBeanException e) {
+            log.error(e.getMessage(), e);
+        }
+        catch (InstanceAlreadyExistsException e) {
+            log.error(e.getMessage(), e);
+        }
+        catch (MBeanRegistrationException e) {
+            log.error(e.getMessage(), e);
         }
 
         queue = new LinkedBlockingQueue<DatagramQueueElement>(queueSize);
@@ -187,6 +215,11 @@ public class Journaller implements Runnable {
                 }
             }
         }
+    }
+
+    @ManagedAttribute
+    public int getCurrentQueueSize() {
+        return queue.size();
     }
 
     protected void parseArguments(String[] args) throws CmdLineException {

@@ -4,20 +4,21 @@ package org.lwes.journaller;
  * Date: Apr 22, 2009
  */
 
-import junit.framework.TestCase;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.junit.Test;
 import org.lwes.Event;
-import org.lwes.EventSystemException;
-import org.lwes.db.EventTemplateDB;
 import org.lwes.journaller.handler.GZIPEventHandler;
 
 import java.io.File;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.List;
 
-public class GZIPEventHandlerTest extends TestCase {
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+public class GZIPEventHandlerTest extends BaseJournallerTest {
     private transient Log log = LogFactory.getLog(GZIPEventHandlerTest.class);
 
     /**
@@ -25,6 +26,7 @@ public class GZIPEventHandlerTest extends TestCase {
      * verify the number of events in the first file, throw 10 more events, shutdown
      * the handler then verify the events in the rotated file.
      */
+    @Test
     public void testHandler() {
         try {
             GZIPEventHandler handler = new GZIPEventHandler("target/junit-gzip-%tY%tm%td%tH%tM%tS");
@@ -36,7 +38,8 @@ public class GZIPEventHandlerTest extends TestCase {
                 handler.handleEvent(createTestEvent());
             }
             Thread.sleep(1000);
-            handler.handleEvent(createRotateEvent());
+            handler.rotate();
+
             MockDeJournaller mdj = new MockDeJournaller();
             mdj.setFileName(generatedFile1);
             mdj.setGzipped(true);
@@ -60,11 +63,11 @@ public class GZIPEventHandlerTest extends TestCase {
 
             File f = new File(generatedFile1);
             if (f.exists()) {
-                f.delete();
+                assertTrue(f.delete());
             }
             f = new File(generatedFile2);
             if (f.exists()) {
-                f.delete();
+                assertTrue(f.delete());
             }
         }
         catch (Exception e) {
@@ -73,33 +76,4 @@ public class GZIPEventHandlerTest extends TestCase {
         }
     }
 
-    private Event createRotateEvent()
-            throws EventSystemException,
-                   UnknownHostException {
-
-        EventTemplateDB evtDb = new EventTemplateDB();
-        evtDb.initialize();
-        Event evt = new Event("Command::Rotate", false, evtDb);
-        evt.setIPAddress("SenderIP", InetAddress.getByName("192.168.1.1"));
-        evt.setUInt16("SenderPort", 9191);
-        evt.setInt64("ReceiptTime", System.currentTimeMillis());
-        evt.setUInt16("SiteID", 0);
-        return evt;
-    }
-
-    private Event createTestEvent()
-            throws EventSystemException,
-                   UnknownHostException {
-
-        EventTemplateDB evtDb = new EventTemplateDB();
-        evtDb.initialize();
-        Event evt = new Event("TestEvent", false, evtDb);
-        evt.setIPAddress("SenderIP", InetAddress.getByName("192.168.1.1"));
-        evt.setUInt16("SenderPort", 9191);
-        evt.setInt64("ReceiptTime", System.currentTimeMillis());
-        evt.setUInt16("SiteID", 0);
-        evt.setString("field1", "testing");
-        evt.setInt32("intField1", 256);
-        return evt;
-    }
 }

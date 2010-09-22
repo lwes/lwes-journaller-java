@@ -5,10 +5,11 @@ package org.lwes.journaller;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.lwes.Event;
 import org.lwes.journaller.handler.AbstractFileEventHandler;
 import org.lwes.listener.DatagramQueueElement;
 
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 import java.io.IOException;
 import java.util.Calendar;
 
@@ -43,16 +44,28 @@ public class MockFileEventHandler extends AbstractFileEventHandler {
         this.calendar = calendar;
     }
 
-    protected void rotate() throws IOException {
+    public boolean rotate() throws IOException {
         generateFilename(calendar);
+        return true;
     }
 
     public void destroy() {
     }
 
-    public void handleEvent(Event event) {
+    public void handleEvent(DatagramQueueElement element) throws IOException {
     }
 
-    public void handleEvent(DatagramQueueElement element) throws IOException {
+    @Override
+    public void closeOutputStream() throws IOException {
+        // no op
+    }
+
+    @Override
+    public void createOutputStream() throws IOException {
+        // no op
+    }
+
+    public ObjectName getObjectName() throws MalformedObjectNameException {
+        return null;
     }
 }

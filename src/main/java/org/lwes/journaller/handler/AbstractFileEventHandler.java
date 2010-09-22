@@ -8,15 +8,22 @@ import org.apache.commons.logging.LogFactory;
 import org.lwes.Event;
 import org.lwes.EventSystemException;
 import org.lwes.journaller.event.Health;
+import org.lwes.journaller.event.Rotate;
 import org.lwes.journaller.util.FilenameFormatter;
+import org.lwes.listener.DatagramQueueElement;
 
+import javax.management.ManagedAttribute;
+import javax.management.ManagedOperation;
+import java.io.File;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.util.Calendar;
 
-public abstract class AbstractFileEventHandler implements DatagramQueueElementHandler {
+import static javax.management.Impact.INFO;
+
+public abstract class AbstractFileEventHandler implements DatagramQueueElementHandler, EventHandlerMBean {
 
     private static transient Log log = LogFactory.getLog(AbstractFileEventHandler.class);
 
@@ -35,33 +42,42 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
     private InetAddress multicastAddr;
     private int multicastPort;
 
-    private long numEvents = 0;
+    private long eventCount = 0;
 
     private int healthInterval = 60;
     private long lastHealthTime = System.currentTimeMillis();
 
     /**
-     * Make sure number is the specified number of digits. If not <b>prepend</b>
-     * 0's. I use this for dates: 1-9 come back as 01-09.
+     * This method checks if the filename we want to use already exists. If it does
+     * we move it to a different name to avoid clobbering data we may want to keep.
      *
-     * @param number the value we want to verify
-     * @param digits the number of digits number should be.
-     * @return String containing the padded number.
+     * @param newFile the proposed new file object.
      */
-    protected String pad(int number, int digits) {
-        String str = "" + number;
-        if (str.length() < digits) {
-            for (int i = 0; i < digits - str.length(); i++) {
-                str = "0" + str;
+    public void moveExistingFile(File newFile) {
+        if (newFile.exists()) {
+            if (log.isDebugEnabled()) {
+                log.debug(newFile.getAbsolutePath() + " exists. Renaming");
+            }
+            Calendar c = Calendar.getInstance();
+            // TODO I don't like this...
+            StringBuilder buf = new StringBuilder()
+                .append(c.get(Calendar.YEAR)).append(c.get(Calendar.MONTH))
+                .append(c.get(Calendar.DAY_OF_MONTH)).append(c.get(Calendar.HOUR_OF_DAY))
+                .append(c.get(Calendar.MINUTE))
+                .append(getFilename());
+            boolean succeeded = newFile.renameTo(new File(buf.toString()));
+            if (!succeeded) {
+                log.error("File rename failed. " + newFile.getAbsolutePath());
+            }
+            else {
+                if (log.isDebugEnabled()) {
+                    log.debug("Renamed file to: " + newFile.getAbsolutePath());
+                }
             }
         }
-        return str;
     }
 
-    protected abstract void rotate() throws IOException;
-
-    public abstract String getFileExtension();
-
+    @ManagedAttribute
     public String getFilename() {
         return filename;
     }
@@ -77,7 +93,9 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
             fn += getFileExtension();
         }
         this.filename = fn;
-
+        if (log.isDebugEnabled()) {
+            log.debug("Generated a new filename: " + fn);
+        }
         return fn;
     }
 
@@ -117,7 +135,7 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
         if (healthInterval > 0 &&
             (now - lastHealthTime) > (healthInterval * 1000)) {
             try {
-                emit(new Health(now, getNumEvents(), healthInterval));
+                emit(new Health(now, getEventCount(), healthInterval));
             }
             catch (EventSystemException e) {
                 log.error(e.getMessage(), e);
@@ -145,6 +163,72 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
         }
     }
 
+    /**
+     * Hook to make sure the output stream gets closed.
+     */
+    public void destroy() {
+        if (log.isInfoEnabled()) {
+            log.info("Closing output stream...");
+        }
+        try {
+            closeOutputStream();
+        }
+        catch (IOException e) {
+            log.error(e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Rotate the output file when called. It will name the new file based on the
+     * server time. If a file already exists for that hour it will append "-1" or
+     * increasing number at the end.
+     *
+     * @return false if we did NOT rotate the file, true if we did
+     * @throws IOException if there is a problem opening the file.
+     */
+    @ManagedOperation(impact = INFO)
+    public boolean rotate() throws IOException {
+        long ts = System.currentTimeMillis();
+        if (tooSoonToRotate(ts)) {
+            if (log.isDebugEnabled()) {
+                log.debug("Too soon to rotate.");
+            }
+            return false;
+        }
+
+        String oldfile = getFilename();
+        if (log.isDebugEnabled()) {
+            log.debug("oldfile: " + oldfile);
+        }
+        closeOutputStream();
+        log.debug("Closed the output stream");
+
+        generateFilename();
+        createOutputStream();
+
+        lastRotateTimestamp = ts;
+        try {
+            emit(new Rotate(System.currentTimeMillis(), getEventCount(), oldfile));
+            setEventCount(0);
+        }
+        catch (EventSystemException e) {
+            log.error(e.getMessage(), e);
+        }
+
+        return true;
+    }
+
+    public void handleEvent(DatagramQueueElement element) throws IOException {
+        emitHealth();
+    }
+
+    public abstract String getFileExtension();
+
+    public abstract void createOutputStream() throws IOException;
+
+    public abstract void closeOutputStream() throws IOException;
+
+    @ManagedAttribute
     public int getMulticastPort() {
         return multicastPort;
     }
@@ -153,6 +237,7 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
         this.multicastPort = multicastPort;
     }
 
+    @ManagedAttribute
     public InetAddress getMulticastAddr() {
         return multicastAddr;
     }
@@ -169,6 +254,7 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
         this.rotateGracePeriod = rotateGracePeriod;
     }
 
+    @ManagedAttribute
     public int getSiteId() {
         return siteId;
     }
@@ -177,6 +263,7 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
         this.siteId = siteId;
     }
 
+    @ManagedAttribute
     public String getFilenamePattern() {
         return filenamePattern;
     }
@@ -193,18 +280,20 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
         this.socket = socket;
     }
 
-    public long getNumEvents() {
-        return numEvents;
+    @ManagedAttribute
+    public long getEventCount() {
+        return eventCount;
     }
 
-    public void setNumEvents(long numEvents) {
-        this.numEvents = numEvents;
+    public void setEventCount(long eventCount) {
+        this.eventCount = eventCount;
     }
 
     public void incrNumEvents() {
-        numEvents++;
+        eventCount++;
     }
 
+    @ManagedAttribute
     public int getHealthInterval() {
         return healthInterval;
     }

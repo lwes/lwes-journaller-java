@@ -15,9 +15,10 @@ import org.lwes.Event;
 import org.lwes.EventSystemException;
 import org.lwes.db.EventTemplateDB;
 import org.lwes.journaller.JournallerConstants;
-import org.lwes.journaller.event.Rotate;
 import org.lwes.listener.DatagramQueueElement;
 
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 import java.io.IOException;
 import java.net.DatagramPacket;
 
@@ -26,17 +27,16 @@ public class SequenceFileHandler extends AbstractFileEventHandler implements Jou
     private static transient Log log = LogFactory.getLog(SequenceFileHandler.class);
 
     private EventTemplateDB eventTemplate = new EventTemplateDB();
-    private final Object semaphore = new Object();
     private SequenceFile.Writer out = null;
     private BytesWritable key = new BytesWritable();
 
     public SequenceFileHandler(String filePattern) throws IOException {
         setFilenamePattern(filePattern);
         generateFilename();
-        createFileHandle();
+        createOutputStream();
     }
 
-    private void createFileHandle() throws IOException {
+    public void createOutputStream() throws IOException {
         Configuration conf = new Configuration();
         FileSystem fs = FileSystem.get(conf);
         Path path = new Path(getFilename());
@@ -51,42 +51,18 @@ public class SequenceFileHandler extends AbstractFileEventHandler implements Jou
         return ".seq";
     }
 
-    @Override
-    protected void rotate() throws IOException {
-        String oldfile = getFilename();
-        if (out != null) {
-            out.close();
-        }
-        generateFilename();
-        createFileHandle();
-        try {
-            emit(new Rotate(System.currentTimeMillis(), getNumEvents(), oldfile));
-            setNumEvents(0);
-        }
-        catch (EventSystemException e) {
-            log.error(e.getMessage(), e);
-        }
-    }
-
     public void handleEvent(DatagramQueueElement element) throws IOException {
         DatagramPacket packet = element.getPacket();
-        long ts = System.currentTimeMillis();
         emitHealth();
-        // If we get a rotate event, it is from the local host and it
-        // isn't too soon since the last one then rotate the log.
-        if (isRotateEvent(packet.getData()) &&
-            !tooSoonToRotate(ts) &&
-            "/127.0.0.1".equals(packet.getAddress().toString())) {
-            lastRotateTimestamp = ts;
-            rotate();
-        }
-        else if (!isJournallerEvent(packet.getData())) {
+        if (!isJournallerEvent(packet.getData())) {
             incrNumEvents();
             Event event = null;
             try {
+                // TODO: maybe make the key the header, and the value the event?
+                // That way we don't need to serialize into an Event here.
                 event = new Event(packet.getData(), false, eventTemplate);
                 if (!event.containsKey("enc")) {
-                    event.setInt16(Event.ENCODING, Event.DEFAULT_ENCODING);                    
+                    event.setInt16(Event.ENCODING, Event.DEFAULT_ENCODING);
                 }
                 event.setIPAddress(JournallerConstants.SENDER_IP, packet.getAddress());
                 event.setUInt16(JournallerConstants.SENDER_PORT, packet.getPort());
@@ -103,14 +79,11 @@ public class SequenceFileHandler extends AbstractFileEventHandler implements Jou
         }
     }
 
-    public void destroy() {
-        if (out != null) {
-            try {
-                out.close();
-            }
-            catch (IOException e) {
-                log.error(e.getMessage(), e);
-            }
-        }
+    public void closeOutputStream() throws IOException {
+        out.close();
+    }
+
+    public ObjectName getObjectName() throws MalformedObjectNameException {
+        return new ObjectName("org.lwes:name=SequenceFileHandler");
     }
 }

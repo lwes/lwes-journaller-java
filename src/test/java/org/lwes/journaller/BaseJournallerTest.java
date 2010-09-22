@@ -9,7 +9,9 @@ import org.junit.Ignore;
 import org.lwes.Event;
 import org.lwes.EventSystemException;
 import org.lwes.db.EventTemplateDB;
+import org.lwes.listener.DatagramQueueElement;
 
+import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
@@ -31,20 +33,27 @@ public class BaseJournallerTest {
         evt.setUInt16("SiteID", 0);
         return evt;
     }
-
-    public Event createTestEvent()
+                       
+    public DatagramQueueElement createTestEvent()
             throws EventSystemException,
                    UnknownHostException {
 
+        long ts = System.currentTimeMillis();
         EventTemplateDB evtDb = new EventTemplateDB();
         evtDb.initialize();
         Event evt = new Event("TestEvent", false, evtDb);
-        evt.setIPAddress("SenderIP", InetAddress.getByName("192.168.1.1"));
-        evt.setUInt16("SenderPort", 9191);
-        evt.setInt64("ReceiptTime", System.currentTimeMillis());
-        evt.setUInt16("SiteID", 0);
         evt.setString("field1", "testing");
         evt.setInt32("intField1", 256);
-        return evt;
+
+        DatagramQueueElement dqe = new DatagramQueueElement();
+        dqe.setTimestamp(ts);
+        byte[] buffer = evt.serialize();
+        DatagramPacket packet = new DatagramPacket(buffer,
+                                                   buffer.length,
+                                                   InetAddress.getLocalHost(),
+                                                   9191);
+        dqe.setPacket(packet);
+
+        return dqe;
     }
 }
