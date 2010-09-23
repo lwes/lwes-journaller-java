@@ -22,6 +22,10 @@ CP=${CP}:${bin}/config
 
 $JAVA_HOME/bin/java \
 $JAVA_OPTS \
+-Dcom.sun.management.jmxremote \
+-Dcom.sun.management.jmxremote.port=9999 \
+-Dcom.sun.management.jmxremote.authenticate=false \
+-Dcom.sun.management.jmxremote.ssl=false \
 -Dlog4j.configuration=log4j.xml \
 -classpath $CP \
 org.lwes.journaller.Journaller $@ &

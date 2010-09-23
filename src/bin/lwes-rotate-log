@@ -19,6 +19,8 @@ done
 CP=${CP}:${bin}/config
 
 $JAVA_HOME/bin/java \
+-Dcom.sun.management.jmxremote.authenticate=false \
+-Dcom.sun.management.jmxremote.ssl=false \
 -Dlog4j.configuration=log4j.xml \
 -classpath $CP \
-org.lwes.util.JMXUtil $@
+org.lwes.journaller.util.Rotate $@
