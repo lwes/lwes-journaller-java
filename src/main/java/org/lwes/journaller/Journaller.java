@@ -21,6 +21,7 @@ import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ManagedAttribute;
+import javax.management.ManagedOperation;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 import java.io.IOException;
@@ -251,6 +252,18 @@ public class Journaller implements Runnable, JournallerMBean {
             eventHandler.destroy();
             shutdown();
         }
+    }
+
+    /**
+     * Convenience method for rotating the journaller file without needing
+     * to know which implementation is being used (sequence, gzip, etc.)
+     *
+     * @return Returns the result of the eventHandler.rotate() call.
+     * @throws IOException
+     */
+    @ManagedOperation
+    public boolean rotate() throws IOException {
+        return eventHandler.rotate();
     }
 
     public boolean isUseGzip() {

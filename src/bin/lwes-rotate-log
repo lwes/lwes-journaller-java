@@ -21,4 +21,4 @@ CP=${CP}:${bin}/config
 $JAVA_HOME/bin/java \
 -Dlog4j.configuration=log4j.xml \
 -classpath $CP \
-org.lwes.TestEmitter -r $@
+org.lwes.util.JMXUtil $@
