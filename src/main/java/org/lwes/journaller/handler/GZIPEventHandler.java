@@ -11,7 +11,6 @@ import org.lwes.journaller.DeJournaller;
 import org.lwes.journaller.util.EventHandlerUtil;
 import org.lwes.listener.DatagramQueueElement;
 
-import javax.management.MBean;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import java.io.File;
@@ -24,12 +23,14 @@ import java.util.zip.GZIPOutputStream;
 /**
  * Write events to GzipOuputStream.
  */
-@MBean
 public class GZIPEventHandler extends AbstractFileEventHandler {
 
     private transient Log log = LogFactory.getLog(GZIPEventHandler.class);
 
     private GZIPOutputStream out = null;
+
+    public GZIPEventHandler() {
+    }
 
     /**
      * Create the Event handler and open the output stream to the file.

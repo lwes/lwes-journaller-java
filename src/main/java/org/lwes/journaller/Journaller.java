@@ -20,8 +20,6 @@ import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
-import javax.management.ManagedAttribute;
-import javax.management.ManagedOperation;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 import java.io.IOException;
@@ -95,7 +93,7 @@ public class Journaller implements Runnable, JournallerMBean {
         try {
             ObjectName name = new ObjectName("org.lwes:name=Journaller");
             mbs.registerMBean(this, name);
-            mbs.registerMBean(eventHandler, eventHandler.getObjectName());
+            //mbs.registerMBean(eventHandler, eventHandler.getObjectName());
         }
         catch (MalformedObjectNameException e) {
             log.error(e.getMessage(), e);
@@ -218,7 +216,10 @@ public class Journaller implements Runnable, JournallerMBean {
         }
     }
 
-    @ManagedAttribute
+    public long getEventCount() {
+        return eventHandler.getEventCount();
+    }
+
     public int getCurrentQueueSize() {
         return queue.size();
     }
@@ -261,7 +262,6 @@ public class Journaller implements Runnable, JournallerMBean {
      * @return Returns the result of the eventHandler.rotate() call.
      * @throws IOException
      */
-    @ManagedOperation
     public boolean rotate() throws IOException {
         return eventHandler.rotate();
     }

@@ -12,8 +12,6 @@ import org.lwes.journaller.event.Rotate;
 import org.lwes.journaller.util.FilenameFormatter;
 import org.lwes.listener.DatagramQueueElement;
 
-import javax.management.ManagedAttribute;
-import javax.management.ManagedOperation;
 import java.io.File;
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -21,9 +19,7 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.util.Calendar;
 
-import static javax.management.Impact.INFO;
-
-public abstract class AbstractFileEventHandler implements DatagramQueueElementHandler, EventHandlerMBean {
+public abstract class AbstractFileEventHandler implements DatagramQueueElementHandler {
 
     private static transient Log log = LogFactory.getLog(AbstractFileEventHandler.class);
 
@@ -77,7 +73,6 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
         }
     }
 
-    @ManagedAttribute
     public String getFilename() {
         return filename;
     }
@@ -186,7 +181,6 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
      * @return false if we did NOT rotate the file, true if we did
      * @throws IOException if there is a problem opening the file.
      */
-    @ManagedOperation(impact = INFO)
     public boolean rotate() throws IOException {
         long ts = System.currentTimeMillis();
         if (tooSoonToRotate(ts)) {
@@ -228,7 +222,6 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
 
     public abstract void closeOutputStream() throws IOException;
 
-    @ManagedAttribute
     public int getMulticastPort() {
         return multicastPort;
     }
@@ -237,7 +230,6 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
         this.multicastPort = multicastPort;
     }
 
-    @ManagedAttribute
     public InetAddress getMulticastAddr() {
         return multicastAddr;
     }
@@ -254,7 +246,6 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
         this.rotateGracePeriod = rotateGracePeriod;
     }
 
-    @ManagedAttribute
     public int getSiteId() {
         return siteId;
     }
@@ -263,7 +254,6 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
         this.siteId = siteId;
     }
 
-    @ManagedAttribute
     public String getFilenamePattern() {
         return filenamePattern;
     }
@@ -280,7 +270,6 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
         this.socket = socket;
     }
 
-    @ManagedAttribute
     public long getEventCount() {
         return eventCount;
     }
@@ -293,7 +282,6 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
         eventCount++;
     }
 
-    @ManagedAttribute
     public int getHealthInterval() {
         return healthInterval;
     }
