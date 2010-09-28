@@ -194,11 +194,8 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
         if (log.isDebugEnabled()) {
             log.debug("oldfile: " + oldfile);
         }
-        closeOutputStream();
-        log.debug("Closed the output stream");
 
-        generateFilename();
-        createOutputStream();
+        closeAndReopen();
 
         lastRotateTimestamp = ts;
         try {
@@ -211,6 +208,8 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
 
         return true;
     }
+
+    public abstract void closeAndReopen() throws IOException;
 
     public void handleEvent(DatagramQueueElement element) throws IOException {
         emitHealth();

@@ -27,6 +27,8 @@ public class NIOEventHandler extends AbstractFileEventHandler {
     private ByteBuffer headerBuffer = ByteBuffer.allocateDirect(DeJournaller.MAX_HEADER_SIZE);
     private ByteBuffer bodyBuffer = ByteBuffer.allocateDirect(DeJournaller.MAX_BODY_SIZE);
 
+    private final Object lock = new Object();
+
     public NIOEventHandler() {
     }
 
@@ -37,6 +39,15 @@ public class NIOEventHandler extends AbstractFileEventHandler {
 
         headerBuffer.clear();
         bodyBuffer.clear();
+    }
+
+    @Override
+    public void closeAndReopen() throws IOException {
+        synchronized (lock) {
+            closeOutputStream();
+            generateFilename();
+            createOutputStream();
+        }
     }
 
     public boolean rotate() throws IOException {
@@ -75,14 +86,16 @@ public class NIOEventHandler extends AbstractFileEventHandler {
                                      getSiteId(),
                                      headerBuffer);
 
-        headerBuffer.flip();
-        channel.write(headerBuffer);
-        bodyBuffer.put(packet.getData());
-        bodyBuffer.flip();
-        channel.write(bodyBuffer);
-        out.flush();
-        headerBuffer.clear();
-        bodyBuffer.clear();
+        synchronized (lock) {
+            headerBuffer.flip();
+            channel.write(headerBuffer);
+            bodyBuffer.put(packet.getData());
+            bodyBuffer.flip();
+            channel.write(bodyBuffer);
+            out.flush();
+            headerBuffer.clear();
+            bodyBuffer.clear();
+        }
     }
 
     public String getFileExtension() {

@@ -27,9 +27,19 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
 
     private transient Log log = LogFactory.getLog(GZIPEventHandler.class);
 
+    private final Object lock = new Object();
+
     private GZIPOutputStream out = null;
 
     public GZIPEventHandler() {
+    }
+
+    public void closeAndReopen() throws IOException {
+        synchronized (lock) {
+            closeOutputStream();
+            generateFilename();
+            createOutputStream();
+        }
     }
 
     /**
@@ -83,9 +93,11 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
                                          packet.getPort(),
                                          getSiteId(),
                                          b);
-            out.write(b.array(), 0, DeJournaller.MAX_HEADER_SIZE);
-            out.write(packet.getData());
-            out.flush();
+            synchronized (lock) {
+                out.write(b.array(), 0, DeJournaller.MAX_HEADER_SIZE);
+                out.write(packet.getData());
+                out.flush();
+            }
         }
     }
 
