@@ -32,6 +32,11 @@ public class MockFileEventHandler extends AbstractFileEventHandler {
         generateFilename(c);
     }
 
+    @Override
+    public void closeAndReopen() throws IOException {
+        
+    }
+
     public String getFileExtension() {
         return null;
     }
