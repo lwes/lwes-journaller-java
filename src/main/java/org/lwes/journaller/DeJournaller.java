@@ -28,16 +28,16 @@ public class DeJournaller implements Runnable, JournallerConstants {
     private static transient Log log = LogFactory.getLog(DeJournaller.class);
 
     @Option(name = "-g", aliases = "--gzipped")
-    private boolean gzipped;
+    protected boolean gzipped;
 
     @Option(name = "-f", aliases = "--file")
-    private String fileName;
+    protected String fileName;
 
     @Option(name = "-e", aliases = "--esf-file")
-    private String esfFile;
+    protected String esfFile;
 
     @Option(name = "-v", aliases = "validate")
-    private boolean validate = false;
+    protected boolean validate = false;
 
     public DeJournaller() {
     }

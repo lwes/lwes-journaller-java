@@ -97,6 +97,62 @@ public class EventHandlerUtil implements JournallerConstants {
         buf.put(bytes);
     }
 
+    public static byte[] readEvent(DataInputStream in, DeserializerState state) throws IOException {
+
+        byte[] headerData = new byte[MAX_HEADER_SIZE];
+        // read header
+        in.readFully(headerData, 0, MAX_HEADER_SIZE);
+
+        int size = 0;
+        long time = 0l;
+        int port = 0;
+        int siteId = 0;
+
+        ByteBuffer buf = ByteBuffer.allocate(MAX_HEADER_SIZE);
+        buf = buf.put(headerData);
+        buf.position(0); // reset to beginning
+
+        byte[] shortBuf = new byte[2];
+        buf.get(shortBuf);
+        size = Deserializer.deserializeUINT16(state, shortBuf);
+        if (size < 0 || size > MAX_MSG_SIZE) {
+            // something is wrong
+            log.info("error reading header info. Size was " + size);
+            return null;
+        }
+
+        time = buf.getLong();
+
+        byte[] ipbytes = new byte[4];
+        buf.get(ipbytes);
+        InetAddress ip = InetAddress.getByAddress(ipbytes);
+
+        state.reset();
+        buf.get(shortBuf);
+        port = Deserializer.deserializeUINT16(state, shortBuf);
+
+        state.reset();
+        buf.get(shortBuf);
+        siteId = Deserializer.deserializeUINT16(state, shortBuf);
+
+        byte[] unused = new byte[4];
+        buf.get(unused);
+
+        if (log.isDebugEnabled()) {
+            log.debug("size: " + size);
+            log.debug("time: " + time);
+            log.debug("ip: " + ip);
+            log.debug("port: " + port);
+            log.debug("siteId: " + siteId);
+        }
+
+        byte[] eventData = new byte[MAX_BODY_SIZE];
+        // Now read in the event
+        in.readFully(eventData, 0, size);
+
+        return eventData;
+    }
+
     public static Event readEvent(DataInputStream in,
                                   DeserializerState state,
                                   EventTemplateDB evtTemplate)
