@@ -65,7 +65,6 @@ public class SequenceFileHandler extends AbstractFileEventHandler implements Jou
         DatagramPacket packet = element.getPacket();
         emitHealth();
         if (!isJournallerEvent(packet.getData())) {
-            incrNumEvents();
             Event event = null;
             try {
                 // TODO: maybe make the key the header, and the value the event?
@@ -82,7 +81,10 @@ public class SequenceFileHandler extends AbstractFileEventHandler implements Jou
                 byte[] bytes = event.serialize();
                 key.set(bytes, 0, bytes.length);
                 synchronized (lock) {
-                    out.append(key, NullWritable.get());
+                    if (out != null) {
+                        incrNumEvents();
+                        out.append(key, NullWritable.get());
+                    }
                 }
             }
             catch (EventSystemException e) {
@@ -93,6 +95,7 @@ public class SequenceFileHandler extends AbstractFileEventHandler implements Jou
 
     public void closeOutputStream() throws IOException {
         out.close();
+        out = null;
     }
 
     public ObjectName getObjectName() throws MalformedObjectNameException {

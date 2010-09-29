@@ -85,7 +85,6 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
     public void handleEvent(DatagramQueueElement element) throws IOException {
         DatagramPacket packet = element.getPacket();
         if (!isJournallerEvent(packet.getData())) {
-            incrNumEvents();
             ByteBuffer b = ByteBuffer.allocate(DeJournaller.MAX_HEADER_SIZE);
             EventHandlerUtil.writeHeader(packet.getLength(),
                                          element.getTimestamp(),
@@ -94,9 +93,12 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
                                          getSiteId(),
                                          b);
             synchronized (lock) {
-                out.write(b.array(), 0, DeJournaller.MAX_HEADER_SIZE);
-                out.write(packet.getData());
-                out.flush();
+                if (out != null) {
+                    incrNumEvents();
+                    out.write(b.array(), 0, DeJournaller.MAX_HEADER_SIZE);
+                    out.write(packet.getData());
+                    out.flush();
+                }
             }
         }
     }
@@ -104,6 +106,7 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
     public void closeOutputStream() throws IOException {
         out.flush();
         out.close();
+        out = null;
     }
 
     public ObjectName getObjectName() throws MalformedObjectNameException {
