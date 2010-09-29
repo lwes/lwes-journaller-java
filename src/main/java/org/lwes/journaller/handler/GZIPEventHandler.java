@@ -27,21 +27,11 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
 
     private transient Log log = LogFactory.getLog(GZIPEventHandler.class);
 
-    private final Object lock = new Object();
-
     private GZIPOutputStream out = null;
 
     public GZIPEventHandler() {
     }
-
-    public void closeAndReopen() throws IOException {
-        synchronized (lock) {
-            closeOutputStream();
-            generateFilename();
-            createOutputStream();
-        }
-    }
-
+    
     /**
      * Create the Event handler and open the output stream to the file.
      *

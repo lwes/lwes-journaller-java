@@ -29,21 +29,11 @@ public class SequenceFileHandler extends AbstractFileEventHandler implements Jou
     private EventTemplateDB eventTemplate = new EventTemplateDB();
     private SequenceFile.Writer out = null;
     private BytesWritable key = new BytesWritable();
-    private final Object lock = new Object();
 
     public SequenceFileHandler(String filePattern) throws IOException {
         setFilenamePattern(filePattern);
         generateFilename();
         createOutputStream();
-    }
-
-    @Override
-    public void closeAndReopen() throws IOException {
-        synchronized (lock) {
-            closeOutputStream();
-            generateFilename();
-            createOutputStream();
-        }
     }
 
     public void createOutputStream() throws IOException {

@@ -18,6 +18,7 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.util.Calendar;
+import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class AbstractFileEventHandler implements DatagramQueueElementHandler {
 
@@ -38,10 +39,12 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
     private InetAddress multicastAddr;
     private int multicastPort;
 
-    private long eventCount = 0;
+    private AtomicLong eventCount = new AtomicLong();
 
     private int healthInterval = 60;
     private long lastHealthTime = System.currentTimeMillis();
+
+    protected final Object lock = new Object();
 
     /**
      * This method checks if the filename we want to use already exists. If it does
@@ -195,21 +198,24 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
             log.debug("oldfile: " + oldfile);
         }
 
-        closeAndReopen();
+        // Sync on the close and reopen of the file and counting the number of events.
+        synchronized (lock) {
+            closeOutputStream();
+            generateFilename();
+            createOutputStream();
 
-        lastRotateTimestamp = ts;
-        try {
-            emit(new Rotate(System.currentTimeMillis(), getEventCount(), oldfile));
-            setEventCount(0);
-        }
-        catch (EventSystemException e) {
-            log.error(e.getMessage(), e);
+            lastRotateTimestamp = ts;
+            try {
+                emit(new Rotate(System.currentTimeMillis(), getEventCount(), oldfile));
+                setEventCount(0);
+            }
+            catch (EventSystemException e) {
+                log.error(e.getMessage(), e);
+            }
         }
 
         return true;
     }
-
-    public abstract void closeAndReopen() throws IOException;
 
     public void handleEvent(DatagramQueueElement element) throws IOException {
         emitHealth();
@@ -270,15 +276,15 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
     }
 
     public long getEventCount() {
-        return eventCount;
+        return eventCount.get();
     }
 
     public void setEventCount(long eventCount) {
-        this.eventCount = eventCount;
+        this.eventCount.set(eventCount);
     }
 
     public void incrNumEvents() {
-        eventCount++;
+        eventCount.incrementAndGet();
     }
 
     public int getHealthInterval() {
