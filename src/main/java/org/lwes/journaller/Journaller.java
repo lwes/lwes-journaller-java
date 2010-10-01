@@ -190,7 +190,7 @@ public class Journaller implements Runnable, JournallerMBean {
             }
         }
         catch (Exception e) {
-            log.error("Error initializing: ", e);
+            log.error(e.getMessage(), e);
         }
     }
 
