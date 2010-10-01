@@ -24,13 +24,8 @@
         <priority value="ERROR"/>
     </category>
 
-    <category name="org.lwes.journaller.CountDeJournaller">
-        <priority value="INFO"/>
-        <appender-ref ref="CONSOLE"/>
-    </category>
-
     <root>
-        <priority value="DEBUG"/>
+        <priority value="INFO"/>
         <appender-ref ref="FILE"/>
     </root>
 

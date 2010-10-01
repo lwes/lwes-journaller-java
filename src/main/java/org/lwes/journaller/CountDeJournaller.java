@@ -3,8 +3,6 @@ package org.lwes.journaller;
  * @author fmaritato
  */
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.kohsuke.args4j.CmdLineException;
 import org.lwes.db.EventTemplateDB;
 import org.lwes.journaller.util.EventHandlerUtil;
@@ -17,13 +15,12 @@ import java.io.IOException;
 import java.util.zip.GZIPInputStream;
 
 public class CountDeJournaller extends DeJournaller {
-    private static transient Log log = LogFactory.getLog(CountDeJournaller.class);
 
     private int counter = 0;
 
     public void run() {
         if (fileName == null || "".equals(fileName)) {
-            log.error("File name was not specified");
+            System.err.println("File name was not specified");
             return;
         }
 
@@ -34,7 +31,6 @@ public class CountDeJournaller extends DeJournaller {
 
         DataInputStream in = null;
         try {
-            log.debug("Opening file: " + fileName);
             if (gzipped) {
                 in = new DataInputStream(new GZIPInputStream(new FileInputStream(fileName)));
             }
@@ -51,7 +47,7 @@ public class CountDeJournaller extends DeJournaller {
             // this is normal. Just catch and ignore.
         }
         catch (Exception e) {
-            log.error(e.getMessage(), e);
+            e.printStackTrace();
         }
         finally {
             if (in != null) {
@@ -59,21 +55,16 @@ public class CountDeJournaller extends DeJournaller {
                     in.close();
                 }
                 catch (IOException e) {
-                    log.error(e.getMessage(), e);
+                    e.printStackTrace();
                 }
             }
             done();
         }
-        log.info("Found: " + counter + " events.");
+        System.out.println("Found: " + counter + " events.");
     }
 
     public void handleEvent(byte[] event) {
         counter++;
-        if (log.isDebugEnabled()) {
-            if (counter % 100 == 0) {
-                log.debug("counter: " + counter);
-            }
-        }
     }
 
     public static void main(String[] args) {
@@ -82,7 +73,7 @@ public class CountDeJournaller extends DeJournaller {
             dj.parseArguments(args);
         }
         catch (CmdLineException e) {
-            log.error(e.getMessage(), e);
+            e.printStackTrace();
         }
         dj.run();
     }
