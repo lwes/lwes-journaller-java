@@ -3,6 +3,14 @@ package org.lwes.journaller;
  * @author fmaritato
  */
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.BytesWritable;
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.SequenceFile;
 import org.kohsuke.args4j.CmdLineException;
 import org.lwes.db.EventTemplateDB;
 import org.lwes.journaller.util.EventHandlerUtil;
@@ -15,6 +23,8 @@ import java.io.IOException;
 import java.util.zip.GZIPInputStream;
 
 public class CountDeJournaller extends DeJournaller {
+
+    private static final transient Log log = LogFactory.getLog(CountDeJournaller.class);
 
     private int counter = 0;
 
@@ -31,16 +41,21 @@ public class CountDeJournaller extends DeJournaller {
 
         DataInputStream in = null;
         try {
-            if (gzipped) {
-                in = new DataInputStream(new GZIPInputStream(new FileInputStream(fileName)));
+            if (sequence) {
+                processSequenceFile(fileName);
             }
             else {
-                in = new DataInputStream(new FileInputStream(fileName));
-            }
-            byte[] bytes;
-            while ((bytes = EventHandlerUtil.readEvent(in, state)) != null) {
-                state.reset();
-                handleEvent(bytes);
+                if (gzipped) {
+                    in = new DataInputStream(new GZIPInputStream(new FileInputStream(fileName)));
+                }
+                else {
+                    in = new DataInputStream(new FileInputStream(fileName));
+                }
+                byte[] bytes;
+                while ((bytes = EventHandlerUtil.readEvent(in, state)) != null) {
+                    state.reset();
+                    handleEvent(bytes);
+                }
             }
         }
         catch (EOFException e) {
@@ -61,6 +76,37 @@ public class CountDeJournaller extends DeJournaller {
             done();
         }
         System.out.println("Found: " + counter + " events.");
+    }
+
+    protected void processSequenceFile(String file) {
+
+        Configuration conf = new Configuration();
+        FileSystem fs = null;
+        SequenceFile.Reader reader = null;
+        try {
+            if (log.isDebugEnabled()) {
+                log.debug("Opening file: " + getFileName());
+            }
+            fs = FileSystem.get(conf);
+            Path p = new Path(file);
+            reader = new SequenceFile.Reader(fs, p, conf);
+
+            BytesWritable key = (BytesWritable) reader.getKeyClass().newInstance();
+            NullWritable value = NullWritable.get();
+
+            while (reader.next(key, value)) {
+                handleEvent(key.getBytes());
+            }
+        }
+        catch (InstantiationException e) {
+            log.error(e.getMessage(), e);
+        }
+        catch (IllegalAccessException e) {
+            log.error(e.getMessage(), e);
+        }
+        catch (IOException e) {
+            log.error(e.getMessage(), e);
+        }
     }
 
     public void handleEvent(byte[] event) {

@@ -9,10 +9,17 @@ package org.lwes.journaller;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.BytesWritable;
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.SequenceFile;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.lwes.Event;
+import org.lwes.EventSystemException;
 import org.lwes.db.EventTemplateDB;
 import org.lwes.journaller.util.EventHandlerUtil;
 import org.lwes.serializer.DeserializerState;
@@ -26,6 +33,9 @@ import java.util.zip.GZIPInputStream;
 
 public class DeJournaller implements Runnable, JournallerConstants {
     private static transient Log log = LogFactory.getLog(DeJournaller.class);
+
+    @Option(name = "--seq", aliases = "--sequence")
+    protected boolean sequence = false;
 
     @Option(name = "-g", aliases = "--gzipped")
     protected boolean gzipped;
@@ -62,16 +72,21 @@ public class DeJournaller implements Runnable, JournallerConstants {
         DataInputStream in = null;
         try {
             log.debug("Opening file: " + fileName);
-            if (gzipped) {
-                in = new DataInputStream(new GZIPInputStream(new FileInputStream(fileName)));
+            if (sequence) {
+                processSequenceFile(fileName);
             }
             else {
-                in = new DataInputStream(new FileInputStream(fileName));
-            }
-            Event evt;
-            while ((evt = EventHandlerUtil.readEvent(in, state, evtTemplate, validate)) != null) {
-                state.reset();
-                handleEvent(evt);
+                if (gzipped) {
+                    in = new DataInputStream(new GZIPInputStream(new FileInputStream(fileName)));
+                }
+                else {
+                    in = new DataInputStream(new FileInputStream(fileName));
+                }
+                Event evt;
+                while ((evt = EventHandlerUtil.readEvent(in, state, evtTemplate, validate)) != null) {
+                    state.reset();
+                    handleEvent(evt);
+                }
             }
         }
         catch (EOFException e) {
@@ -90,6 +105,54 @@ public class DeJournaller implements Runnable, JournallerConstants {
                 }
             }
             done();
+        }
+    }
+
+    protected void processSequenceFile(String file) {
+        Configuration conf = new Configuration();
+        FileSystem fs = null;
+        SequenceFile.Reader reader = null;
+        try {
+            if (log.isDebugEnabled()) {
+                log.debug("Opening file: " + file);
+            }
+            fs = FileSystem.get(conf);
+            Path p = new Path(file);
+            reader = new SequenceFile.Reader(fs, p, conf);
+
+            BytesWritable key = (BytesWritable) reader.getKeyClass().newInstance();
+            NullWritable value = NullWritable.get();
+
+            EventTemplateDB templ = new EventTemplateDB();
+            while (reader.next(key, value)) {
+                Event evt = new Event(key.getBytes(), false, templ);
+                if (log.isDebugEnabled()) {
+                    log.debug("read a k/v: "+evt.toOneLineString());
+                }
+                handleEvent(evt);
+            }
+        }
+        catch (IOException e) {
+            log.error(e.getMessage(), e);
+        }
+        catch (InstantiationException e) {
+            log.error(e.getMessage(), e);
+        }
+        catch (IllegalAccessException e) {
+            log.error(e.getMessage(), e);
+        }
+        catch (EventSystemException e) {
+            log.error(e.getMessage(), e);
+        }
+        finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                }
+                catch (IOException e) {
+                    log.error(e.getMessage(), e);
+                }
+            }
         }
     }
 
