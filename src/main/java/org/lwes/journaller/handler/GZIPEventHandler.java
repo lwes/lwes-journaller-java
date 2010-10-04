@@ -7,7 +7,7 @@ package org.lwes.journaller.handler;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.lwes.journaller.DeJournaller;
+import org.lwes.journaller.JournallerConstants;
 import org.lwes.journaller.util.EventHandlerUtil;
 import org.lwes.listener.DatagramQueueElement;
 
@@ -31,7 +31,7 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
 
     public GZIPEventHandler() {
     }
-    
+
     /**
      * Create the Event handler and open the output stream to the file.
      *
@@ -75,7 +75,7 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
     public void handleEvent(DatagramQueueElement element) throws IOException {
         DatagramPacket packet = element.getPacket();
         if (!isJournallerEvent(packet.getData())) {
-            ByteBuffer b = ByteBuffer.allocate(DeJournaller.MAX_HEADER_SIZE);
+            ByteBuffer b = ByteBuffer.allocate(JournallerConstants.MAX_HEADER_SIZE);
             EventHandlerUtil.writeHeader(packet.getLength(),
                                          element.getTimestamp(),
                                          packet.getAddress(),
@@ -85,7 +85,7 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
             synchronized (lock) {
                 if (out != null) {
                     incrNumEvents();
-                    out.write(b.array(), 0, DeJournaller.MAX_HEADER_SIZE);
+                    out.write(b.array(), 0, JournallerConstants.MAX_HEADER_SIZE);
                     out.write(packet.getData());
                     out.flush();
                 }
