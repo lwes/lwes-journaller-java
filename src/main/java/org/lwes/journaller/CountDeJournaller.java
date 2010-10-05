@@ -9,7 +9,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.kohsuke.args4j.CmdLineException;
 import org.lwes.db.EventTemplateDB;
@@ -92,7 +91,7 @@ public class CountDeJournaller extends DeJournaller {
             reader = new SequenceFile.Reader(fs, p, conf);
 
             BytesWritable key = (BytesWritable) reader.getKeyClass().newInstance();
-            NullWritable value = NullWritable.get();
+            BytesWritable value = (BytesWritable) reader.getKeyClass().newInstance();
 
             while (reader.next(key, value)) {
                 handleEvent(key.getBytes());

@@ -9,18 +9,17 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
-import org.lwes.Event;
-import org.lwes.EventSystemException;
 import org.lwes.db.EventTemplateDB;
 import org.lwes.journaller.JournallerConstants;
+import org.lwes.journaller.util.EventHandlerUtil;
 import org.lwes.listener.DatagramQueueElement;
 
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.nio.ByteBuffer;
 
 public class SequenceFileHandler extends AbstractFileEventHandler implements JournallerConstants {
 
@@ -29,6 +28,7 @@ public class SequenceFileHandler extends AbstractFileEventHandler implements Jou
     private EventTemplateDB eventTemplate = new EventTemplateDB();
     private SequenceFile.Writer out = null;
     private BytesWritable key = new BytesWritable();
+    private BytesWritable value = new BytesWritable();
 
     public SequenceFileHandler(String filePattern) throws IOException {
         setFilenamePattern(filePattern);
@@ -42,7 +42,7 @@ public class SequenceFileHandler extends AbstractFileEventHandler implements Jou
         Path path = new Path(getFilename());
         out = SequenceFile.createWriter(fs, conf, path,
                                         BytesWritable.class,
-                                        NullWritable.class,
+                                        BytesWritable.class,
                                         SequenceFile.CompressionType.BLOCK);
     }
 
@@ -55,10 +55,20 @@ public class SequenceFileHandler extends AbstractFileEventHandler implements Jou
         DatagramPacket packet = element.getPacket();
         emitHealth();
         if (!isJournallerEvent(packet.getData())) {
-            Event event = null;
-            try {
+            //Event event = null;
+            //try {
+                ByteBuffer b = ByteBuffer.allocate(JournallerConstants.MAX_HEADER_SIZE);
+                EventHandlerUtil.writeHeader(packet.getLength(),
+                                             element.getTimestamp(),
+                                             packet.getAddress(),
+                                             packet.getPort(),
+                                             getSiteId(),
+                                             b);
+                key.set(b.array(), 0, JournallerConstants.MAX_HEADER_SIZE);
+
                 // TODO: maybe make the key the header, and the value the event?
                 // That way we don't need to serialize into an Event here.
+                /*
                 event = new Event(packet.getData(), false, eventTemplate);
                 if (!event.containsKey("enc")) {
                     event.setInt16(Event.ENCODING, Event.DEFAULT_ENCODING);
@@ -67,19 +77,21 @@ public class SequenceFileHandler extends AbstractFileEventHandler implements Jou
                 event.setUInt16(JournallerConstants.SENDER_PORT, packet.getPort());
                 event.setUInt16(JournallerConstants.SITE_ID, getSiteId());
                 event.setInt64(JournallerConstants.RECEIPT_TIME, System.currentTimeMillis());
-
-                byte[] bytes = event.serialize();
-                key.set(bytes, 0, bytes.length);
+                */
+                byte[] bytes = packet.getData();
+                value.set(bytes, 0, bytes.length);
                 synchronized (lock) {
                     if (out != null) {
                         incrNumEvents();
-                        out.append(key, NullWritable.get());
+                        out.append(key, value);
                     }
                 }
-            }
+            //}
+            /*
             catch (EventSystemException e) {
                 log.error(e.getMessage(), e);
             }
+            */
         }
     }
 

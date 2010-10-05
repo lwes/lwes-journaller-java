@@ -13,7 +13,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
@@ -24,6 +23,7 @@ import org.lwes.db.EventTemplateDB;
 import org.lwes.journaller.util.EventHandlerUtil;
 import org.lwes.serializer.DeserializerState;
 
+import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.File;
@@ -121,11 +121,22 @@ public class DeJournaller implements Runnable, JournallerConstants {
             reader = new SequenceFile.Reader(fs, p, conf);
 
             BytesWritable key = (BytesWritable) reader.getKeyClass().newInstance();
-            NullWritable value = NullWritable.get();
+            BytesWritable value = (BytesWritable) reader.getKeyClass().newInstance();
 
             EventTemplateDB templ = new EventTemplateDB();
+            DeserializerState state = new DeserializerState();
             while (reader.next(key, value)) {
-                Event evt = new Event(key.getBytes(), false, templ);
+                byte[] evtBytes = new byte[key.getLength()+value.getLength()];
+                System.arraycopy(key.getBytes(), 0,
+                                 evtBytes, 0,
+                                 key.getLength());
+                System.arraycopy(value.getBytes(), 0,
+                                 evtBytes,
+                                 key.getLength(), value.getLength());
+                Event evt = EventHandlerUtil.readEvent
+                    (new DataInputStream(new ByteArrayInputStream(evtBytes)),
+                     state, templ);
+                state.reset();
                 if (log.isDebugEnabled()) {
                     log.debug("read a k/v: "+evt.toOneLineString());
                 }
