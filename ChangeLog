@@ -1,4 +1,8 @@
-=== Version 0.0.7 ===
+=== Version 1.0.0 ===
+* JMX added for monitoring.
+* Refactored the Event Handlers.
+* Added SequenceFileEventHandler to output events to sequence files for use
+with hadoop.
 * Journaller will now emit a couple of events that can be used to monitor it's health.
 ** Journaller::Health -- emitted when a message is received and enough time has elapsed since
 the last one. Contains the timestamp, the number of events emitted and the interval at which
