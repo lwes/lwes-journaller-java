@@ -55,43 +55,24 @@ public class SequenceFileHandler extends AbstractFileEventHandler implements Jou
         DatagramPacket packet = element.getPacket();
         emitHealth();
         if (!isJournallerEvent(packet.getData())) {
-            //Event event = null;
-            //try {
-                ByteBuffer b = ByteBuffer.allocate(JournallerConstants.MAX_HEADER_SIZE);
-                EventHandlerUtil.writeHeader(packet.getLength(),
-                                             element.getTimestamp(),
-                                             packet.getAddress(),
-                                             packet.getPort(),
-                                             getSiteId(),
-                                             b);
-                key.set(b.array(), 0, JournallerConstants.MAX_HEADER_SIZE);
+            ByteBuffer b = ByteBuffer.allocate(JournallerConstants.MAX_HEADER_SIZE);
+            EventHandlerUtil.writeHeader(packet.getLength(),
+                                         element.getTimestamp(),
+                                         packet.getAddress(),
+                                         packet.getPort(),
+                                         getSiteId(),
+                                         b);
 
-                // TODO: maybe make the key the header, and the value the event?
-                // That way we don't need to serialize into an Event here.
-                /*
-                event = new Event(packet.getData(), false, eventTemplate);
-                if (!event.containsKey("enc")) {
-                    event.setInt16(Event.ENCODING, Event.DEFAULT_ENCODING);
+            key.set(b.array(), 0, JournallerConstants.MAX_HEADER_SIZE);
+            byte[] bytes = packet.getData();
+            value.set(bytes, 0, bytes.length);
+
+            synchronized (lock) {
+                if (out != null) {
+                    incrNumEvents();
+                    out.append(key, value);
                 }
-                event.setIPAddress(JournallerConstants.SENDER_IP, packet.getAddress());
-                event.setUInt16(JournallerConstants.SENDER_PORT, packet.getPort());
-                event.setUInt16(JournallerConstants.SITE_ID, getSiteId());
-                event.setInt64(JournallerConstants.RECEIPT_TIME, System.currentTimeMillis());
-                */
-                byte[] bytes = packet.getData();
-                value.set(bytes, 0, bytes.length);
-                synchronized (lock) {
-                    if (out != null) {
-                        incrNumEvents();
-                        out.append(key, value);
-                    }
-                }
-            //}
-            /*
-            catch (EventSystemException e) {
-                log.error(e.getMessage(), e);
             }
-            */
         }
     }
 
