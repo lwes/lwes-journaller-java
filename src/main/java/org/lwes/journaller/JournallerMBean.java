@@ -17,4 +17,6 @@ public interface JournallerMBean {
     public int getCurrentQueueSize();
 
     public boolean rotate() throws IOException;
+
+    public void shutdown();
 }
