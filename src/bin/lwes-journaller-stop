@@ -4,25 +4,20 @@
 bin=`dirname "$0"`/..
 bin=`cd "$bin"; pwd`
 
-##
-# Script to try and gracefully shut down the journaller. If it is not shut down
-# gracefully, the file won't be closed and likely will not be readable.
-##
-PID_FILE=${1:-journaller.pid}
-if [ ! -f $PID_FILE ]; then
-  echo "No pid file. Exiting."
-  exit
-fi
-PID=`cat $PID_FILE`
-
-# Check if it's running
-VAL=`ps -p ${PID} -o comm=`
-if [ -z ${VAL} ]; then
-  echo "Journaller is not running"
-else
-  # kill it "nicely"
-  kill -15 $PID
-  if [ "$?" = "0" ]; then
-    rm $PID_FILE
+for jar in ${bin}/lib/*.jar
+do
+  if [ -z $CP ]; then
+    CP=${jar}
+  else
+    CP=${CP}:${jar}
   fi
-fi
+done
+CP=${CP}:${bin}/config
+
+# Use JMX to tell the journaller to stop
+$JAVA_HOME/bin/java \
+-Dcom.sun.management.jmxremote.authenticate=false \
+-Dcom.sun.management.jmxremote.ssl=false \
+-Dlog4j.configuration=log4j.xml \
+-classpath $CP \
+org.lwes.journaller.util.JMXUtil --shutdown --host $1 --port $2

@@ -23,4 +23,4 @@ $JAVA_HOME/bin/java \
 -Dcom.sun.management.jmxremote.ssl=false \
 -Dlog4j.configuration=log4j.xml \
 -classpath $CP \
-org.lwes.journaller.util.Rotate $@
+org.lwes.journaller.util.JMXUtil --rotate --host $1 --port $2
