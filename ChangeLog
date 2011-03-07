@@ -1,4 +1,10 @@
-=== Version 1.0.0 ===
+=== 1.0.1 ===
+* Exposed shutdown method in JournallerMBean and changed the stop scripts to call that.
+* Deleted the Rotate class for jmx in favor of the JMXUtil class that does both shutdown and rotate. Updated
+rotate shell script to reflect this.
+* Added a 5 second timeout to the Datagram socket
+
+ === Version 1.0.0 ===
 * JMX added for monitoring.
 * Refactored the Event Handlers.
 * Added SequenceFileEventHandler to output events to sequence files for use
