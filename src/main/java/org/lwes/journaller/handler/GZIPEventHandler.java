@@ -94,9 +94,11 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
     }
 
     public void closeOutputStream() throws IOException {
-        out.flush();
-        out.close();
-        out = null;
+        if (out != null) {
+            out.flush();
+            out.close();
+            out = null;
+        }
     }
 
     public ObjectName getObjectName() throws MalformedObjectNameException {

@@ -77,8 +77,10 @@ public class SequenceFileHandler extends AbstractFileEventHandler implements Jou
     }
 
     public void closeOutputStream() throws IOException {
-        out.close();
-        out = null;
+        if (out != null) {
+            out.close();
+            out = null;
+        }
     }
 
     public ObjectName getObjectName() throws MalformedObjectNameException {

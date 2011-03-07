@@ -92,8 +92,10 @@ public class NIOEventHandler extends AbstractFileEventHandler {
     }
 
     public void closeOutputStream() throws IOException {
-        out.flush();
-        out.close();
+        if (out != null) {
+            out.flush();
+            out.close();
+        }
     }
 
     public ObjectName getObjectName() throws MalformedObjectNameException {
