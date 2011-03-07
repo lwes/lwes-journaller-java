@@ -27,6 +27,7 @@ import java.lang.management.ManagementFactory;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.net.SocketTimeoutException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -38,7 +39,7 @@ public class Journaller implements Runnable, JournallerMBean {
     private String fileName;
 
     @Option(name = "-l", aliases = "--file-pattern")
-    private String filePattern;
+    private String filePattern = "%tY%tm%td%tH%tM-%h";
 
     @Option(name = "-m", aliases = "--multicast-address")
     private String multicastAddress = "224.1.1.11";
@@ -68,9 +69,9 @@ public class Journaller implements Runnable, JournallerMBean {
     private boolean useSequence = false;
 
     private AbstractFileEventHandler eventHandler = null;
-    private MulticastSocket socket = null;
+    private volatile MulticastSocket socket = null;
     private boolean initialized = false;
-    private boolean running = true;
+    private volatile boolean running = true;
     private LinkedBlockingQueue<DatagramQueueElement> queue = null;
     private MBeanServer mbs = null;
 
@@ -113,6 +114,7 @@ public class Journaller implements Runnable, JournallerMBean {
         InetAddress address = InetAddress.getByName(getMulticastAddress());
         socket = new MulticastSocket(getPort());
         socket.joinGroup(address);
+        socket.setSoTimeout(5000);
 
         // If we want monitoring events *emitted* then provide the handler with the socket
         // and relevent information.
@@ -159,7 +161,11 @@ public class Journaller implements Runnable, JournallerMBean {
     }
 
     public void shutdown() {
+        if (log.isInfoEnabled()) {
+            log.info("Got shutdown signal");
+        }
         running = false;
+        eventHandler.destroy();
     }
 
     public void run() {
@@ -172,21 +178,28 @@ public class Journaller implements Runnable, JournallerMBean {
 
             while (running) {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                socket.receive(packet);
-                /* we record the time *after* the receive because it blocks */
-                long receiptTime = System.currentTimeMillis();
+                try {
+                    socket.receive(packet);
 
-                /* copy the data into a tight buffer so we can release the loose buffer */
-                final byte[] tightBuffer = new byte[packet.getLength()];
-                System.arraycopy(packet.getData(), 0, tightBuffer, 0, tightBuffer.length);
-                packet.setData(tightBuffer);
+                    /* we record the time *after* the receive because it blocks */
+                    long receiptTime = System.currentTimeMillis();
 
-                /* create an element for the queue */
-                DatagramQueueElement element = new DatagramQueueElement();
-                element.setPacket(packet);
-                element.setTimestamp(receiptTime);
+                    /* copy the data into a tight buffer so we can release the loose buffer */
+                    final byte[] tightBuffer = new byte[packet.getLength()];
+                    System.arraycopy(packet.getData(), 0, tightBuffer, 0, tightBuffer.length);
+                    packet.setData(tightBuffer);
 
-                queue.add(element);
+                    /* create an element for the queue */
+                    DatagramQueueElement element = new DatagramQueueElement();
+                    element.setPacket(packet);
+                    element.setTimestamp(receiptTime);
+
+                    queue.add(element);
+                }
+                catch (SocketTimeoutException e) {
+                    // Don't really care. This is here in case we want to interrupt the thread and kill
+                    // the process without using a unix signal.
+                }
             }
         }
         catch (Exception e) {
@@ -249,8 +262,7 @@ public class Journaller implements Runnable, JournallerMBean {
         }
 
         public void run() {
-            log.debug("shutdown thread run()");
-            eventHandler.destroy();
+            log.info("shutdown thread run()");
             shutdown();
         }
     }
