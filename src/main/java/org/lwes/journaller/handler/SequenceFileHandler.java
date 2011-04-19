@@ -10,7 +10,6 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.SequenceFile;
-import org.lwes.db.EventTemplateDB;
 import org.lwes.journaller.JournallerConstants;
 import org.lwes.journaller.util.EventHandlerUtil;
 import org.lwes.listener.DatagramQueueElement;
@@ -25,7 +24,6 @@ public class SequenceFileHandler extends AbstractFileEventHandler implements Jou
 
     private static transient Log log = LogFactory.getLog(SequenceFileHandler.class);
 
-    private EventTemplateDB eventTemplate = new EventTemplateDB();
     private SequenceFile.Writer out = null;
     private BytesWritable key = new BytesWritable();
     private BytesWritable value = new BytesWritable();
@@ -38,7 +36,7 @@ public class SequenceFileHandler extends AbstractFileEventHandler implements Jou
 
     public void createOutputStream() throws IOException {
         Configuration conf = new Configuration();
-        FileSystem fs = FileSystem.get(conf);
+        FileSystem fs = FileSystem.getLocal(conf).getRaw();
         Path path = new Path(getFilename());
         out = SequenceFile.createWriter(fs, conf, path,
                                         BytesWritable.class,
