@@ -2,9 +2,12 @@
 * Exposed shutdown method in JournallerMBean and changed the stop scripts to call that.
 * Deleted the Rotate class for jmx in favor of the JMXUtil class that does both shutdown and rotate. Updated
 rotate shell script to reflect this.
-* Added a 5 second timeout to the Datagram socket
+* Added a 5 second timeout to the Datagram socket.
+* Change the FileSystem passed into the SequenceFileWriter to use the raw local to avoid creation
+of the crc files.
+* Updated to cdh3u0 of hadoop-core for sequence file output.
 
- === Version 1.0.0 ===
+=== Version 1.0.0 ===
 * JMX added for monitoring.
 * Refactored the Event Handlers.
 * Added SequenceFileEventHandler to output events to sequence files for use
