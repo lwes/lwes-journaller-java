@@ -103,6 +103,11 @@ public class JMXUtil {
     }
 
     public void run() throws MalformedObjectNameException, IOException {
+        if (host == null || port == null) {
+            log.error("Host and port must be specified.");
+            return;
+        }
+
         if (shutdown) {
             callShutdown(host + ":" + port);
         }
@@ -121,11 +126,11 @@ public class JMXUtil {
         CmdLineParser parser = new CmdLineParser(util);
         try {
             parser.parseArgument(args);
+            util.run();
         }
         catch (CmdLineException e) {
             System.err.println(e.getMessage());
             parser.printUsage(System.err);
         }
-        util.run();
     }
 }
