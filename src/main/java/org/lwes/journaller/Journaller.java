@@ -194,7 +194,15 @@ public class Journaller implements Runnable, JournallerMBean {
                     element.setPacket(packet);
                     element.setTimestamp(receiptTime);
 
-                    queue.add(element);
+                    // If we don't check the capacity here and the queue is full, it will throw
+                    // an IllegalStateException and the journaller will stop writing events to the
+                    // file. If the queue is full, just drop events until it empties.
+                    if (queue.remainingCapacity() > 0) {
+                        queue.add(element);
+                    }
+                    else {
+                        log.error("Queue is full. Dropping events!");
+                    }
                 }
                 catch (SocketTimeoutException e) {
                     // Don't really care. This is here in case we want to interrupt the thread and kill
