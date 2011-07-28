@@ -76,6 +76,10 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
         }
     }
 
+    public void setFilename(String filename) {
+        this.filename = filename;
+    }
+
     public String getFilename() {
         return filename;
     }
@@ -90,7 +94,6 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
             !fn.endsWith(getFileExtension())) {
             fn += getFileExtension();
         }
-        this.filename = fn;
         if (log.isDebugEnabled()) {
             log.debug("Generated a new filename: " + fn);
         }
@@ -169,6 +172,9 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
             log.info("Closing output stream...");
         }
         try {
+            synchronized (lock) {
+                swapOutputStream();
+            }
             closeOutputStream();
         }
         catch (IOException e) {
@@ -182,7 +188,7 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
      * increasing number at the end.
      *
      * @return false if we did NOT rotate the file, true if we did
-     * @throws IOException if there is a problem opening the file.
+     * @throws java.io.IOException if there is a problem opening the file.
      */
     public boolean rotate() throws IOException {
         long ts = System.currentTimeMillis();
@@ -198,12 +204,13 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
             log.debug("oldfile: " + oldfile);
         }
 
+        String newFilename = generateFilename();
+        createOutputStream(newFilename);
+
         // Sync on the close and reopen of the file and counting the number of events.
         synchronized (lock) {
-            closeOutputStream();
-            generateFilename();
-            createOutputStream();
-
+            swapOutputStream();
+            this.filename = newFilename;
             lastRotateTimestamp = ts;
             try {
                 emit(new Rotate(System.currentTimeMillis(), getEventCount(), oldfile));
@@ -214,6 +221,8 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
             }
         }
 
+        closeOutputStream();
+
         return true;
     }
 
@@ -223,7 +232,9 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
 
     public abstract String getFileExtension();
 
-    public abstract void createOutputStream() throws IOException;
+    public abstract void swapOutputStream();
+
+    public abstract void createOutputStream(String filename) throws IOException;
 
     public abstract void closeOutputStream() throws IOException;
 

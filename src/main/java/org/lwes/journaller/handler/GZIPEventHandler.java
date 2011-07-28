@@ -28,6 +28,8 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
     private transient Log log = LogFactory.getLog(GZIPEventHandler.class);
 
     private GZIPOutputStream out = null;
+    private GZIPOutputStream tmp = null;
+    private GZIPOutputStream old = null;
 
     public GZIPEventHandler() {
     }
@@ -41,8 +43,10 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
      */
     public GZIPEventHandler(String filePattern) throws IOException {
         setFilenamePattern(filePattern);
-        generateFilename();
-        createOutputStream();
+        String fn = generateFilename();
+        createOutputStream(fn);
+        swapOutputStream();
+        setFilename(fn);
     }
 
     /**
@@ -50,10 +54,10 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
      *
      * @throws IOException if there is a problem opening a handle to the file.
      */
-    public void createOutputStream() throws IOException {
-        File newFile = new File(getFilename());
+    public void createOutputStream(String filename) throws IOException {
+        File newFile = new File(filename);
         moveExistingFile(newFile);
-        out = new GZIPOutputStream(new FileOutputStream(getFilename(), true));
+        tmp = new GZIPOutputStream(new FileOutputStream(filename, true));
         if (log.isDebugEnabled()) {
             log.debug("Created a new log file: " + getFilename());
         }
@@ -93,11 +97,17 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
         }
     }
 
+    public void swapOutputStream() {
+        old = out;
+        out = tmp;
+        tmp = null;
+    }
+
     public void closeOutputStream() throws IOException {
-        if (out != null) {
-            out.flush();
-            out.close();
-            out = null;
+        if (old != null) {
+            old.flush();
+            old.close();
+            old = null;
         }
     }
 

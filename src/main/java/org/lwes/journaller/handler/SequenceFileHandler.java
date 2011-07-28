@@ -25,23 +25,33 @@ public class SequenceFileHandler extends AbstractFileEventHandler implements Jou
     private static transient Log log = LogFactory.getLog(SequenceFileHandler.class);
 
     private SequenceFile.Writer out = null;
+    private SequenceFile.Writer tmp = null;
+    private SequenceFile.Writer old = null;
     private BytesWritable key = new BytesWritable();
     private BytesWritable value = new BytesWritable();
 
     public SequenceFileHandler(String filePattern) throws IOException {
         setFilenamePattern(filePattern);
-        generateFilename();
-        createOutputStream();
+        String fn = generateFilename();
+        createOutputStream(fn);
+        swapOutputStream();
+        setFilename(fn);
     }
 
-    public void createOutputStream() throws IOException {
+    public void createOutputStream(String filename) throws IOException {
         Configuration conf = new Configuration();
         FileSystem fs = FileSystem.getLocal(conf).getRaw();
-        Path path = new Path(getFilename());
-        out = SequenceFile.createWriter(fs, conf, path,
+        Path path = new Path(filename);
+        tmp = SequenceFile.createWriter(fs, conf, path,
                                         BytesWritable.class,
                                         BytesWritable.class,
                                         SequenceFile.CompressionType.BLOCK);
+    }
+
+    public void swapOutputStream() {
+        old = out;
+        out = tmp;
+        tmp = null;
     }
 
     @Override
@@ -75,9 +85,9 @@ public class SequenceFileHandler extends AbstractFileEventHandler implements Jou
     }
 
     public void closeOutputStream() throws IOException {
-        if (out != null) {
-            out.close();
-            out = null;
+        if (old != null) {
+            old.close();
+            old = null;
         }
     }
 
