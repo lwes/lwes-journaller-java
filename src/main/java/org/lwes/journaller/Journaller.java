@@ -74,6 +74,9 @@ public class Journaller implements Runnable, JournallerMBean {
     private volatile boolean running = true;
     private LinkedBlockingQueue<DatagramQueueElement> queue = null;
     private MBeanServer mbs = null;
+    private long dropCount = 0;
+
+    private final Object mutex = new Object();
 
     public Journaller() {
     }
@@ -164,8 +167,8 @@ public class Journaller implements Runnable, JournallerMBean {
         if (log.isInfoEnabled()) {
             log.info("Got shutdown signal");
         }
-        running = false;
         eventHandler.destroy();
+        running = false;
     }
 
     public void run() {
@@ -202,6 +205,7 @@ public class Journaller implements Runnable, JournallerMBean {
                     }
                     else {
                         log.error("Queue is full. Dropping events!");
+                        dropCount++;
                     }
                 }
                 catch (SocketTimeoutException e) {
@@ -283,6 +287,9 @@ public class Journaller implements Runnable, JournallerMBean {
      * @throws IOException
      */
     public boolean rotate() throws IOException {
+        synchronized (mutex) {
+            dropCount = 0;
+        }
         return eventHandler.rotate();
     }
 
@@ -372,5 +379,8 @@ public class Journaller implements Runnable, JournallerMBean {
 
     public void setUseSequence(boolean useSequence) {
         this.useSequence = useSequence;
+    }
+    public long getDropCount() {
+        return dropCount;
     }
 }
