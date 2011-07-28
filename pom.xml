@@ -4,7 +4,7 @@
     <groupId>org.lwes</groupId>
     <artifactId>lwes-journaller-java</artifactId>
     <packaging>jar</packaging>
-    <version>1.0.2</version>
+    <version>1.0.3-SNAPSHOT</version>
     <name>lwes-journaller-java</name>
     <url>http://maven.apache.org</url>
 
