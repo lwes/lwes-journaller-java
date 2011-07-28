@@ -20,16 +20,14 @@ public class MockFileEventHandler extends AbstractFileEventHandler {
     private Calendar calendar;
 
     public MockFileEventHandler(String pattern) {
-        this.pattern = pattern;
-        setFilenamePattern(pattern);
-        generateFilename();
+        this(pattern, null);
     }
 
     public MockFileEventHandler(String pattern, Calendar c) {
         this.calendar = c;
         this.pattern = pattern;
         setFilenamePattern(pattern);
-        generateFilename(c);
+        setFilename(generateFilename(c));
     }
 
     public String getFileExtension() {
@@ -45,7 +43,8 @@ public class MockFileEventHandler extends AbstractFileEventHandler {
     }
 
     public boolean rotate() throws IOException {
-        generateFilename(calendar);
+        setFilename(generateFilename(calendar));
+
         return true;
     }
 
@@ -56,12 +55,17 @@ public class MockFileEventHandler extends AbstractFileEventHandler {
     }
 
     @Override
+    public void swapOutputStream() {
+
+    }
+
+    @Override
     public void closeOutputStream() throws IOException {
         // no op
     }
 
     @Override
-    public void createOutputStream() throws IOException {
+    public void createOutputStream(String filename) throws IOException {
         // no op
     }
 
