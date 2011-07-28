@@ -10,10 +10,11 @@
         </layout>
     </appender>
 
-    <appender name="FILE" class="org.apache.log4j.DailyRollingFileAppender">
+    <appender name="FILE" class="org.apache.log4j.DailyMaxRollingFileAppender">
         <errorHandler class="org.apache.log4j.helpers.OnlyOnceErrorHandler"/>
         <param name="File" value="logs/journaller.log"/>
         <param name="Append" value="true"/>
+        <param name="MaxBackupIndex" value="15"/>
         <param name="DatePattern" value="'.'yyyy-MM-dd"/>
         <layout class="org.apache.log4j.PatternLayout">
             <param name="ConversionPattern" value="%5p %d [%t] (%C:%L) - %m%n"/>
