@@ -1,3 +1,10 @@
+=== 1.0.2 ===
+* Check if the queue has capacity before trying to add to it to avoid IllegalStateException.
+* Rotate the file differently to minimize the amount of time blocked in synchronize.
+* Expose DropCount in JMX to keep track of how many events were dropped due to full queue.
+* Added a "DailyMaxRollingFileAppender" which rotates the log4j file daily and also
+keeps a maximum number of backup files.
+
 === 1.0.1 ===
 * Exposed shutdown method in JournallerMBean and changed the stop scripts to call that.
 * Deleted the Rotate class for jmx in favor of the JMXUtil class that does both shutdown and rotate. Updated
