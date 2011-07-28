@@ -15,6 +15,7 @@ public interface JournallerMBean {
     public long getEventCount();
 
     public int getCurrentQueueSize();
+    public long getDropCount();
 
     public boolean rotate() throws IOException;
 
