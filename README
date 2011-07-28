@@ -4,6 +4,10 @@ You will need to install maven 2.x in order to build:
 
 % mvn clean package
 
+To build a release:
+
+% mvn --batch-mode release:prepare release:perform
+
 Running
 
 To start the journaller:
