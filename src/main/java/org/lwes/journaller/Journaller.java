@@ -134,12 +134,12 @@ public class Journaller implements Runnable, JournallerMBean {
         eventHandler.setSiteId(getSiteId());
 
         int bufSize = JournallerConstants.MAX_MSG_SIZE * 50;
-        String bufSizeStr = System.getProperty("MulticastReceiveBufferSize");
+        String bufSizeStr = System.getProperty("ReceiveBufferSize");
         if (bufSizeStr != null && !"".equals(bufSizeStr)) {
             bufSize = Integer.parseInt(bufSizeStr);
         }
         if (log.isDebugEnabled()) {
-            log.debug("multicast receive buffer size: " + bufSize);
+            log.debug("receive buffer size: " + bufSize);
         }
         socket.setReceiveBufferSize(bufSize);
 
@@ -160,7 +160,7 @@ public class Journaller implements Runnable, JournallerMBean {
             log.info("LWES Journaller");
             log.info("Address: " + getAddress());
             log.info("Multicast Interface: " + getMulticastInterface());
-            log.info("Multicast Port: " + getPort());
+            log.info("Port: " + getPort());
             log.info("Using event handler: " + getEventHandler().getClass().getName());
             log.info("Site ID: " + getSiteId());
             log.info("Health check interval: " + getHealthInterval());
