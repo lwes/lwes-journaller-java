@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.net.DatagramSocket;
 import java.util.Calendar;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -35,8 +36,8 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
     private static final byte[] ROTATE = "Command::Rotate".getBytes();
     private static final byte[] JOURNALLER = "Journaller::".getBytes();
 
-    private MulticastSocket socket;
-    private InetAddress multicastAddr;
+    private DatagramSocket socket;
+    private InetAddress address;
     private int multicastPort;
 
     private AtomicLong eventCount = new AtomicLong();
@@ -154,7 +155,7 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
                 byte[] bytes = evt.serialize();
                 DatagramPacket p = new DatagramPacket(bytes,
                                                       bytes.length,
-                                                      getMulticastAddr(),
+                                                      getAddress(),
                                                       getMulticastPort());
                 socket.send(p);
             }
@@ -246,12 +247,12 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
         this.multicastPort = multicastPort;
     }
 
-    public InetAddress getMulticastAddr() {
-        return multicastAddr;
+    public InetAddress getAddress() {
+        return address;
     }
 
-    public void setMulticastAddr(InetAddress multicastAddr) {
-        this.multicastAddr = multicastAddr;
+    public void setAddress(InetAddress address) {
+        this.address = address;
     }
 
     public long getRotateGracePeriod() {
@@ -278,11 +279,11 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
         this.filenamePattern = filenamePattern;
     }
 
-    public MulticastSocket getSocket() {
+    public DatagramSocket getSocket() {
         return socket;
     }
 
-    public void setSocket(MulticastSocket socket) {
+    public void setSocket(DatagramSocket socket) {
         this.socket = socket;
     }
 
