@@ -129,7 +129,7 @@ public class Journaller implements Runnable, JournallerMBean {
         // and relevent information.
         eventHandler.setSocket(socket);
         eventHandler.setAddress(address);
-        eventHandler.setMulticastPort(getPort());
+        eventHandler.setPort(getPort());
         eventHandler.setHealthInterval(getHealthInterval());
         eventHandler.setSiteId(getSiteId());
 

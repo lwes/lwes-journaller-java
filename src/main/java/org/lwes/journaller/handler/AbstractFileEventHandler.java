@@ -38,7 +38,7 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
 
     private DatagramSocket socket;
     private InetAddress address;
-    private int multicastPort;
+    private int port;
 
     private AtomicLong eventCount = new AtomicLong();
 
@@ -156,7 +156,7 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
                 DatagramPacket p = new DatagramPacket(bytes,
                                                       bytes.length,
                                                       getAddress(),
-                                                      getMulticastPort());
+                                                      getPort());
                 socket.send(p);
             }
         }
@@ -239,12 +239,12 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
 
     public abstract void closeOutputStream() throws IOException;
 
-    public int getMulticastPort() {
-        return multicastPort;
+    public int getPort() {
+        return port;
     }
 
-    public void setMulticastPort(int multicastPort) {
-        this.multicastPort = multicastPort;
+    public void setPort(int port) {
+        this.port = port;
     }
 
     public InetAddress getAddress() {
