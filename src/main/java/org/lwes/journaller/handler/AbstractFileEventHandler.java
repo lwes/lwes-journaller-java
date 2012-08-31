@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.net.DatagramSocket;
 import java.util.Calendar;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -35,9 +36,9 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
     private static final byte[] ROTATE = "Command::Rotate".getBytes();
     private static final byte[] JOURNALLER = "Journaller::".getBytes();
 
-    private MulticastSocket socket;
-    private InetAddress multicastAddr;
-    private int multicastPort;
+    private DatagramSocket socket;
+    private InetAddress address;
+    private int port;
 
     private AtomicLong eventCount = new AtomicLong();
 
@@ -154,8 +155,8 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
                 byte[] bytes = evt.serialize();
                 DatagramPacket p = new DatagramPacket(bytes,
                                                       bytes.length,
-                                                      getMulticastAddr(),
-                                                      getMulticastPort());
+                                                      getAddress(),
+                                                      getPort());
                 socket.send(p);
             }
         }
@@ -238,20 +239,20 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
 
     public abstract void closeOutputStream() throws IOException;
 
-    public int getMulticastPort() {
-        return multicastPort;
+    public int getPort() {
+        return port;
     }
 
-    public void setMulticastPort(int multicastPort) {
-        this.multicastPort = multicastPort;
+    public void setPort(int port) {
+        this.port = port;
     }
 
-    public InetAddress getMulticastAddr() {
-        return multicastAddr;
+    public InetAddress getAddress() {
+        return address;
     }
 
-    public void setMulticastAddr(InetAddress multicastAddr) {
-        this.multicastAddr = multicastAddr;
+    public void setAddress(InetAddress address) {
+        this.address = address;
     }
 
     public long getRotateGracePeriod() {
@@ -278,11 +279,11 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
         this.filenamePattern = filenamePattern;
     }
 
-    public MulticastSocket getSocket() {
+    public DatagramSocket getSocket() {
         return socket;
     }
 
-    public void setSocket(MulticastSocket socket) {
+    public void setSocket(DatagramSocket socket) {
         this.socket = socket;
     }
 
