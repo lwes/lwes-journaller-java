@@ -27,6 +27,7 @@ import java.lang.management.ManagementFactory;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.net.DatagramSocket;
 import java.net.SocketTimeoutException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -41,10 +42,10 @@ public class Journaller implements Runnable, JournallerMBean {
     @Option(name = "-l", aliases = "--file-pattern")
     private String filePattern = "%tY%tm%td%tH%tM-%h";
 
-    @Option(name = "-m", aliases = "--multicast-address")
-    private String multicastAddress = "224.1.1.11";
+    @Option(name = "-a", aliases = "--address")
+    private String address = "224.1.1.11";
 
-    @Option(name = "i", aliases = "--multicast-interface")
+    @Option(name = "-i", aliases = "--multicast-interface")
     private String multicastInterface;
 
     @Option(name = "-p", aliases = "--port")
@@ -69,7 +70,7 @@ public class Journaller implements Runnable, JournallerMBean {
     private boolean useSequence = false;
 
     private AbstractFileEventHandler eventHandler = null;
-    private volatile MulticastSocket socket = null;
+    private volatile DatagramSocket socket = null;
     private boolean initialized = false;
     private volatile boolean running = true;
     private LinkedBlockingQueue<DatagramQueueElement> queue = null;
@@ -114,32 +115,37 @@ public class Journaller implements Runnable, JournallerMBean {
 
         queue = new LinkedBlockingQueue<DatagramQueueElement>(queueSize);
 
-        InetAddress address = InetAddress.getByName(getMulticastAddress());
-        socket = new MulticastSocket(getPort());
-        socket.joinGroup(address);
-        socket.setSoTimeout(5000);
-
+        InetAddress address = InetAddress.getByName(getAddress());
+        if( address.isMulticastAddress()){
+            socket = new MulticastSocket(getPort());
+            ((MulticastSocket) socket).joinGroup(address);
+            socket.setSoTimeout(5000);
+        }
+        else{
+            socket = new DatagramSocket(getPort(), address);
+            socket.setSoTimeout(5000);
+        }
         // If we want monitoring events *emitted* then provide the handler with the socket
         // and relevent information.
         eventHandler.setSocket(socket);
-        eventHandler.setMulticastAddr(address);
-        eventHandler.setMulticastPort(getPort());
+        eventHandler.setAddress(address);
+        eventHandler.setPort(getPort());
         eventHandler.setHealthInterval(getHealthInterval());
         eventHandler.setSiteId(getSiteId());
 
         int bufSize = JournallerConstants.MAX_MSG_SIZE * 50;
-        String bufSizeStr = System.getProperty("MulticastReceiveBufferSize");
+        String bufSizeStr = System.getProperty("ReceiveBufferSize");
         if (bufSizeStr != null && !"".equals(bufSizeStr)) {
             bufSize = Integer.parseInt(bufSizeStr);
         }
         if (log.isDebugEnabled()) {
-            log.debug("multicast receive buffer size: " + bufSize);
+            log.debug("receive buffer size: " + bufSize);
         }
         socket.setReceiveBufferSize(bufSize);
 
-        if (getMulticastInterface() != null) {
+        if (getMulticastInterface() != null && address.isMulticastAddress() ) {
             InetAddress iface = InetAddress.getByName(getMulticastInterface());
-            socket.setInterface(iface);
+            ((MulticastSocket) socket).setInterface(iface);
         }
 
         // Add a shutdown hook in case of kill or ^c
@@ -152,10 +158,10 @@ public class Journaller implements Runnable, JournallerMBean {
 
         if (log.isInfoEnabled()) {
             log.info("LWES Journaller");
-            log.info("Multicast Address: " + getMulticastAddress());
+            log.info("Address: " + getAddress());
             log.info("Multicast Interface: " + getMulticastInterface());
-            log.info("Multicast Port: " + getPort());
-            log.info("Using event hander: " + getEventHandler().getClass().getName());
+            log.info("Port: " + getPort());
+            log.info("Using event handler: " + getEventHandler().getClass().getName());
             log.info("Site ID: " + getSiteId());
             log.info("Health check interval: " + getHealthInterval());
         }
@@ -309,12 +315,12 @@ public class Journaller implements Runnable, JournallerMBean {
         this.fileName = fileName;
     }
 
-    public String getMulticastAddress() {
-        return multicastAddress;
+    public String getAddress() {
+        return address;
     }
 
-    public void setMulticastAddress(String multicastAddress) {
-        this.multicastAddress = multicastAddress;
+    public void setAddress(String address) {
+        this.address = address;
     }
 
     public String getMulticastInterface() {

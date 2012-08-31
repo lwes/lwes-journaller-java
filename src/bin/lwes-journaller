@@ -1,6 +1,6 @@
 #!/bin/bash
 
-JAVA_OPTS=${JAVA_OPTS:-"-XX:+UseParallelGC -Xms512m -Xmx512m -ea -server -DMulticastReceiveBufferSize=8388608"}
+JAVA_OPTS=${JAVA_OPTS:-"-XX:+UseParallelGC -Xms512m -Xmx512m -ea -server -DReceiveBufferSize=8388608"}
 
 # Make sure we can run this script from any directory.
 bin=`dirname "$0"`/..

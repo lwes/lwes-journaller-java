@@ -7,7 +7,7 @@ import java.io.IOException;
  */
 public interface JournallerMBean {
 
-    public String getMulticastAddress();
+    public String getAddress();
     public int getPort();
     public int getSiteId();
     public int getTtl();
