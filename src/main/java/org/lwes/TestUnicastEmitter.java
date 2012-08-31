@@ -21,8 +21,8 @@ public class TestUnicastEmitter extends UnicastEventEmitter implements Runnable 
     @Option(name="-a", aliases = "--address")
     private String uniAddress;
 
-    @Option(name="-p", aliases="--port")
-    private int port;
+    @Option(name="-p", aliases="--uniPort")
+    private int uniPort;
 
     @Option(name="-i", aliases = "--interface")
     private String multicastInterface;
@@ -45,7 +45,7 @@ public class TestUnicastEmitter extends UnicastEventEmitter implements Runnable 
     @Override
     public void initialize() throws IOException {
         setAddress(InetAddress.getByName(uniAddress));
-        setPort(port);
+        setPort(uniPort);
         super.initialize();
     }
 
@@ -135,12 +135,12 @@ public class TestUnicastEmitter extends UnicastEventEmitter implements Runnable 
         this.uniAddress = uniAddress;
     }
 
-    public int getPort() {
-        return port;
+    public int getUniPort() {
+        return uniPort;
     }
 
-    public void setPort(int port) {
-        this.port = port;
+    public void setUniPort(int port) {
+        this.uniPort = port;
     }
 
     public int getTtl() {
