@@ -3,15 +3,15 @@ package org.lwes.journaller.event;
  * @author fmaritato
  */
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.lwes.Event;
-import org.lwes.EventSystemException;
-import org.lwes.NoSuchAttributeException;
-
 import java.math.BigInteger;
 
-public class Health extends Event {
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.lwes.EventSystemException;
+import org.lwes.MapEvent;
+import org.lwes.NoSuchAttributeException;
+
+public class Health extends MapEvent {
 
     private static transient Log log = LogFactory.getLog(Health.class);
 

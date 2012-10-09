@@ -3,20 +3,21 @@ package org.lwes.journaller.util;
  * @author fmaritato
  */
 
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.nio.ByteBuffer;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lwes.Event;
 import org.lwes.EventSystemException;
+import org.lwes.MapEvent;
 import org.lwes.db.EventTemplateDB;
 import org.lwes.journaller.JournallerConstants;
 import org.lwes.serializer.Deserializer;
 import org.lwes.serializer.DeserializerState;
 import org.lwes.serializer.Serializer;
-
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.nio.ByteBuffer;
 
 public class EventHandlerUtil implements JournallerConstants {
 
@@ -214,11 +215,11 @@ public class EventHandlerUtil implements JournallerConstants {
             log.debug("siteId: " + siteId);
         }
 
-        byte[] eventData = new byte[MAX_BODY_SIZE];
+        byte[] eventData = new byte[size];
         // Now read in the event
         in.readFully(eventData, 0, size);
 
-        Event e = new Event(eventData, validate, evtTemplate);
+        Event e = new MapEvent(eventData, validate, evtTemplate);
         e.setIPAddress("SenderIP", ip);
         e.setUInt16("SenderPort", port);
         e.setUInt16("SiteID", siteId);

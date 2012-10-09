@@ -4,21 +4,23 @@ package org.lwes.journaller;
  * Date: Apr 22, 2009
  */
 
-import junit.framework.TestCase;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.lwes.Event;
-import org.lwes.EventSystemException;
-import org.lwes.NoSuchAttributeException;
-import org.lwes.db.EventTemplateDB;
-import org.lwes.journaller.handler.SequenceFileHandler;
-import org.lwes.listener.DatagramQueueElement;
-
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.lwes.Event;
+import org.lwes.EventSystemException;
+import org.lwes.MapEvent;
+import org.lwes.NoSuchAttributeException;
+import org.lwes.db.EventTemplateDB;
+import org.lwes.journaller.handler.SequenceFileHandler;
+import org.lwes.listener.DatagramQueueElement;
+
+import junit.framework.TestCase;
 
 public class SequenceFileHandlerTest extends TestCase {
 
@@ -98,7 +100,7 @@ public class SequenceFileHandlerTest extends TestCase {
 
         EventTemplateDB evtDb = new EventTemplateDB();
         evtDb.initialize();
-        Event evt = new Event("TestEvent", false, evtDb);
+        Event evt = new MapEvent("TestEvent", false, evtDb);
         evt.setString("field1", "testing");
         evt.setInt32("intField1", 256);
 
