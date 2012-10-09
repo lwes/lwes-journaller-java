@@ -3,6 +3,12 @@ package org.lwes.journaller;
  * @author fmaritato
  */
 
+import java.io.DataInputStream;
+import java.io.EOFException;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.zip.GZIPInputStream;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -11,15 +17,10 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.kohsuke.args4j.CmdLineException;
+import org.kohsuke.args4j.CmdLineParser;
 import org.lwes.db.EventTemplateDB;
 import org.lwes.journaller.util.EventHandlerUtil;
 import org.lwes.serializer.DeserializerState;
-
-import java.io.DataInputStream;
-import java.io.EOFException;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.zip.GZIPInputStream;
 
 public class CountDeJournaller extends DeJournaller {
 
@@ -114,11 +115,15 @@ public class CountDeJournaller extends DeJournaller {
 
     public static void main(String[] args) {
         CountDeJournaller dj = new CountDeJournaller();
+        CmdLineParser parser = null;
         try {
-            dj.parseArguments(args);
+            parser = new CmdLineParser(dj);
+            parser.parseArgument(args);
         }
         catch (CmdLineException e) {
-            e.printStackTrace();
+            System.err.println(e.getMessage());
+            parser.printUsage(System.err);
+            return;
         }
         dj.run();
     }

@@ -4,6 +4,23 @@ package org.lwes.journaller;
  * Date: Apr 14, 2009
  */
 
+import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.MulticastSocket;
+import java.net.SocketTimeoutException;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+import javax.management.ObjectName;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.kohsuke.args4j.CmdLineException;
@@ -16,57 +33,41 @@ import org.lwes.journaller.handler.NIOEventHandler;
 import org.lwes.journaller.handler.SequenceFileHandler;
 import org.lwes.listener.DatagramQueueElement;
 
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-import javax.management.ObjectName;
-import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.net.DatagramPacket;
-import java.net.InetAddress;
-import java.net.MulticastSocket;
-import java.net.DatagramSocket;
-import java.net.SocketTimeoutException;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-
 public class Journaller implements Runnable, JournallerMBean {
 
     private static transient Log log = LogFactory.getLog(Journaller.class);
 
-    @Option(name = "-f", aliases = "--file")
+    @Option(name = "-f", aliases = "--file", usage = "File to log to")
     private String fileName;
 
-    @Option(name = "-l", aliases = "--file-pattern")
+    @Option(name = "-l", aliases = "--file-pattern", usage = "Pattern to use for file name generation")
     private String filePattern = "%tY%tm%td%tH%tM-%h";
 
-    @Option(name = "-a", aliases = "--address")
+    @Option(name = "-a", aliases = "--address", usage = "Unicast or multicast address to listen on")
     private String address = "224.1.1.11";
 
-    @Option(name = "-i", aliases = "--multicast-interface")
+    @Option(name = "-i", aliases = "--multicast-interface", usage = "Multicast interface")
     private String multicastInterface;
 
-    @Option(name = "-p", aliases = "--port")
+    @Option(name = "-p", aliases = "--port", usage = "Port to listen on")
     private int port = 12345;
 
-    @Option(name = "-t", aliases = "--ttl")
+    @Option(name = "-t", aliases = "--ttl", usage = "Time to live")
     private int ttl = 1;
 
-    @Option(name = "-s", aliases = "--site")
+    @Option(name = "-s", aliases = "--site", usage = "Site ID")
     private int siteId = 0;
 
-    @Option(name = "-q", aliases = "--queue-size")
+    @Option(name = "-q", aliases = "--queue-size", usage = "Max number of events to queue")
     private int queueSize = 8000;
 
-    @Option(name = "--health-interval")
+    @Option(name = "--health-interval", usage = "Interval in seconds to emit health event")
     private int healthInterval = 60;
 
-    @Option(name = "--gzip")
+    @Option(name = "--gzip", usage = "Produce a gzip file")
     private boolean useGzip = false;
 
-    @Option(name = "--sequence")
+    @Option(name = "--sequence", usage = "Produce a sequence file")
     private boolean useSequence = false;
 
     private AbstractFileEventHandler eventHandler = null;
@@ -116,12 +117,12 @@ public class Journaller implements Runnable, JournallerMBean {
         queue = new LinkedBlockingQueue<DatagramQueueElement>(queueSize);
 
         InetAddress address = InetAddress.getByName(getAddress());
-        if( address.isMulticastAddress()){
+        if (address.isMulticastAddress()) {
             socket = new MulticastSocket(getPort());
             ((MulticastSocket) socket).joinGroup(address);
             socket.setSoTimeout(5000);
         }
-        else{
+        else {
             socket = new DatagramSocket(getPort(), address);
             socket.setSoTimeout(5000);
         }
@@ -143,7 +144,7 @@ public class Journaller implements Runnable, JournallerMBean {
         }
         socket.setReceiveBufferSize(bufSize);
 
-        if (getMulticastInterface() != null && address.isMulticastAddress() ) {
+        if (getMulticastInterface() != null && address.isMulticastAddress()) {
             InetAddress iface = InetAddress.getByName(getMulticastInterface());
             ((MulticastSocket) socket).setInterface(iface);
         }
@@ -255,18 +256,17 @@ public class Journaller implements Runnable, JournallerMBean {
         return queue.size();
     }
 
-    protected void parseArguments(String[] args) throws CmdLineException {
-        CmdLineParser parser = new CmdLineParser(this);
-        parser.parseArgument(args);
-    }
-
     public static void main(String[] args) {
         Journaller j = new Journaller();
+        CmdLineParser parser = null;
         try {
-            j.parseArguments(args);
+            parser = new CmdLineParser(j);
+            parser.parseArgument(args);
         }
         catch (CmdLineException e) {
-            log.error(e.getMessage(), e);
+            System.err.println(e.getMessage());
+            parser.printUsage(System.err);
+            return;
         }
         j.run();
     }
@@ -386,6 +386,7 @@ public class Journaller implements Runnable, JournallerMBean {
     public void setUseSequence(boolean useSequence) {
         this.useSequence = useSequence;
     }
+
     public long getDropCount() {
         return dropCount;
     }

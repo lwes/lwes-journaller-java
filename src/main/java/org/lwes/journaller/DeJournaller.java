@@ -35,22 +35,22 @@ import org.lwes.serializer.DeserializerState;
 public class DeJournaller implements Runnable, JournallerConstants {
     private static transient Log log = LogFactory.getLog(DeJournaller.class);
 
-    @Option(name = "--seq", aliases = "--sequence")
+    @Option(name = "--seq", aliases = "--sequence", usage = "Use if dejournalling a sequence file")
     protected boolean sequence = false;
 
-    @Option(name = "-g", aliases = "--gzipped")
+    @Option(name = "-g", aliases = "--gzipped", usage = "Use if dejournalling a gzip file")
     protected boolean gzipped;
 
-    @Option(name = "-f", aliases = "--file")
+    @Option(name = "-f", aliases = "--file", usage = "Location of the file")
     protected String fileName;
 
-    @Option(name = "-e", aliases = "--esf-file")
+    @Option(name = "-e", aliases = "--esf-file", usage = "Location of the ESF if you want to validate")
     protected String esfFile;
 
-    @Option(name = "-v", aliases = "--validate")
+    @Option(name = "-v", aliases = "--validate", usage = "Set if you want to validate events")
     protected boolean validate = false;
 
-    @Option(name = "-a", aliases = "--attributes")
+    @Option(name = "-a", aliases = "--attributes", usage = "Comma separated list of attributes to print")
     protected String attributes;
 
     protected String[] attributeList;
@@ -197,7 +197,7 @@ public class DeJournaller implements Runnable, JournallerConstants {
         if (attributeList != null) {
             for (String a : attributeList) {
                 try {
-                    System.out.print(event.get(a)+" ");
+                    System.out.print(event.get(a) + " ");
                 }
                 catch (NoSuchAttributeException e) {
                     log.error(e);
@@ -210,18 +210,17 @@ public class DeJournaller implements Runnable, JournallerConstants {
         }
     }
 
-    protected void parseArguments(String[] args) throws CmdLineException {
-        CmdLineParser parser = new CmdLineParser(this);
-        parser.parseArgument(args);
-    }
-
     public static void main(String[] args) {
         DeJournaller dj = new DeJournaller();
+        CmdLineParser parser = null;
         try {
-            dj.parseArguments(args);
+            parser = new CmdLineParser(dj);
+            parser.parseArgument(args);
         }
         catch (CmdLineException e) {
-            log.error(e.getMessage(), e);
+            System.err.println(e.getMessage());
+            parser.printUsage(System.err);
+            return;
         }
         dj.run();
     }
