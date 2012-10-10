@@ -1,13 +1,32 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
+   <!-- This section is here so we can publish to central -->
+   <parent>
+     <groupId>org.sonatype.oss</groupId>
+     <artifactId>oss-parent</artifactId>
+     <version>7</version>
+   </parent>
+
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.lwes</groupId>
     <artifactId>lwes-journaller-java</artifactId>
     <packaging>jar</packaging>
     <version>1.1.0-SNAPSHOT</version>
     <name>lwes-journaller-java</name>
-    <url>http://maven.apache.org</url>
+    <description>An LWES Journaller written in Java</description>
+    <url>http://lwes.org</url>
+    <organization>
+        <name>LWES</name>
+    </organization>
+
+    <licenses>
+        <license>
+            <name>BSD</name>
+            <url>https://github.com/lwes/lwes-java/blob/master/LICENSE</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -16,7 +35,17 @@
 
     <scm>
         <connection>scm:git:git@github.com:lwes/lwes-journaller-java.git</connection>
+        <developerConnection>scm:git:git@github.com:lwes/lwes-journaller-java.git</developerConnection>
+        <url>https://github.com/lwes/lwes-journaller-java</url>
     </scm>
+
+    <developers>
+        <developer>
+            <id>lwes-team</id>
+            <name>LWES Development Team</name>
+            <email>lwes-devel@sourceforge.net</email>
+        </developer>
+    </developers>
 
     <dependencies>
         <dependency>
@@ -199,13 +228,14 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>jar-with-deps</id>
+                        <id>with-deps</id>
                         <phase>package</phase>
                         <goals>
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <finalName>${project.artifactId}-with-deps-${project.version}</finalName>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <shadedClassifierName>with-deps</shadedClassifierName>
                         </configuration>
                     </execution>
                 </executions>
@@ -240,7 +270,7 @@
                             <directoryIncluded>false</directoryIncluded>
                             <artifact>
                                 <classifiers>
-                                    <classifier>jar-with-deps</classifier>
+                                    <classifier>with-deps</classifier>
                                 </classifiers>
                             </artifact>
                         </mapping>
@@ -252,7 +282,7 @@
                             <directoryIncluded>false</directoryIncluded>
                             <sources>
                                 <source>
-                                    <location>log4j.xml</location>
+                                    <location>target/classes/log4j.xml</location>
                                 </source>
                             </sources>
                         </mapping>
