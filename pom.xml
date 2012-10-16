@@ -286,6 +286,12 @@
                                 </source>
                             </sources>
                         </mapping>
+                        <mapping>
+                            <directory>/var/log/lwes-journaller</directory>
+                            <filemode>755</filemode>
+                            <username>root</username>
+                            <groupname>root</groupname>
+                        </mapping>
                     </mappings>
                 </configuration>
             </plugin>
