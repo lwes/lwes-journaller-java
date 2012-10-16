@@ -1,0 +1,28 @@
+# THIS IS A SAMPLE SYSCONFIG
+
+export JAVA_HOME=/usr/java/latest
+
+# Location of where the journaller is installed
+export LWES_JOURNALLER_HOME=/usr/share/lwes-journaller
+
+# Multicast or Unicast address to listen on
+export LWES_ADDRESS=224.0.0.88
+
+# Port to listen on
+export LWES_PORT=30000
+
+# Site ID (optional)
+export LWES_JOURNAL_SITEID=0
+
+# Filename to use for current file. The journaller will append .seq or .gz depending
+# on what format it is outputting.
+export LWES_JOURNAL_FILE=/mnt/journaller/journals/current/all_events.log
+
+# Interval in which to emit health events. 0 means disabled.
+export LWES_JOURNAL_HEALTH_INTERVAL=0
+
+# Format of the output file. Possible values are "--gzip" or "--sequence"
+export LWES_JOURNAL_FORMAT="--sequence"
+
+# How many events should be in the queue maximum
+export LWES_JOURNAL_QUEUE_SIZE=8000

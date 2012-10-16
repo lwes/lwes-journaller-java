@@ -1,0 +1,85 @@
+#!/bin/bash
+#
+# This is a sample init.d script
+#
+# chkconfig 345 90 10
+# description: LWES Journaller
+#
+
+if [ -f /etc/rc.d/init.d/functions ]; then
+  . /etc/rc.d/init.d/functions
+fi
+
+if [ -f /etc/sysconfig/lwes-journaller ]; then
+  . /etc/sysconfig/lwes-journaller
+else
+  echo "WARN: /etc/sysconfig/lwes-journaller not found. Exiting"
+  exit 1
+fi
+
+set -e
+set -u
+
+RUN_USER=${RUN_USER:-root}
+PROG=org.lwes.journaller.Journaller
+PROG_CMD="$LWES_JOURNALLER_HOME/bin/lwes-journaller \
+ -a $LWES_ADDRESS -p $LWES_PORT \
+ -f $LWES_JOURNAL_FILE \
+ -s $LWES_JOURNAL_SITEID \
+ --health-interval $LWES_JOURNAL_HEALTH_INTERVAL \
+ --queue-size $LWES_JOURNAL_QUEUE_SIZE \
+ $LWES_JOURNAL_FORMAT"
+
+pidfile=/var/run/lwes-journaller.pid
+
+function getpid() {
+  echo `ps -C java -o pid,cmd | grep $PROG | cut -c1-5`
+}
+
+function start() {
+  echo "Starting $PROG ..."
+  daemon --check=$PROG --user=$RUN_USER $PROG_CMD
+  echo
+  getpid > $pidfile
+}
+
+function stop() {
+  echo "Stopping $PROG ..."
+  killproc -p $pidfile
+  echo
+}
+
+function statusCheck() {
+  status $PROG -p $pidfile
+}
+
+function rotate() {
+  echo "Instructing journaller to rotate file..."
+  $LWES_JOURNALLER_HOME/bin/lwes-rotate-log localhost $LWES_PORT
+  echo
+}
+
+case "$1" in
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  restart)
+    $0 stop
+    $0 start
+    ;;
+  status)
+    statusCheck
+    ;;
+  rotate)
+    rotate
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart|status|rotate}"
+    exit 1
+    ;;
+esac
+
+exit 0
