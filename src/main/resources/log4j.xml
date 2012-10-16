@@ -12,7 +12,7 @@
 
     <appender name="FILE" class="org.apache.log4j.DailyMaxRollingFileAppender">
         <errorHandler class="org.apache.log4j.helpers.OnlyOnceErrorHandler"/>
-        <param name="File" value="logs/journaller.log"/>
+        <param name="File" value="/var/log/lwes-journaller/journaller.log"/>
         <param name="Append" value="true"/>
         <param name="MaxBackupIndex" value="15"/>
         <param name="DatePattern" value="'.'yyyy-MM-dd"/>
