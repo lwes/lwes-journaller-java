@@ -1,6 +1,5 @@
 # THIS IS A SAMPLE SYSCONFIG
-
-export JAVA_HOME=/usr/java/latest
+# MAKE SURE JAVA_HOME IS SET IN /etc/profile.d
 
 # Location of where the journaller is installed
 export LWES_JOURNALLER_HOME=/usr/share/lwes-journaller
