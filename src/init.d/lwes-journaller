@@ -17,8 +17,9 @@ else
   exit 1
 fi
 
-set -e
+# Treat unset environment variables as an error
 set -u
+# Do not use set -e as it will cause status to fail and the command won't get run.
 
 RUN_USER=${RUN_USER:-root}
 PROG=org.lwes.journaller.Journaller
