@@ -74,6 +74,7 @@ public class Rotate extends MapEvent {
             buf.append("Rotate {ts=").append(getTimestamp())
                     .append("; num=").append(getNum())
                     .append("; filename=").append(getFilename())
+                    .append("; numDropped=").append(getNumDropped())
                     .append("}");
         }
         catch (NoSuchAttributeException e) {
