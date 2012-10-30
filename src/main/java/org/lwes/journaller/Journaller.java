@@ -173,6 +173,12 @@ public class Journaller implements Runnable, JournallerMBean {
         if (log.isInfoEnabled()) {
             log.info("Got shutdown signal");
         }
+        try {
+            rotate();
+        }
+        catch (IOException e) {
+            log.error(e);
+        }
         eventHandler.destroy();
         running = false;
     }
