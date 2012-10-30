@@ -10,7 +10,8 @@ Journaller::Health {
 # Indicates that the current journal file was rotated and how many events
 # it thinks are in there.
 Journaller::Rotate {
-  uint64 ts;       # timestamp.
-  uint64 num;      # number of events captured since last rotate.
-  string filename; # the old file.
+  uint64 ts;         # timestamp.
+  uint64 num;        # number of events captured since last rotate.
+  string filename;   # the old file.
+  int64  numDropped; # Number of events that were dropped.
 }
