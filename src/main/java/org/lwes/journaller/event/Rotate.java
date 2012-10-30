@@ -20,6 +20,7 @@ public class Rotate extends MapEvent {
     public static final String TS = "ts";
     public static final String NUM = "num";
     public static final String FILENAME = "filename";
+    public static final String DROPPED = "numDropped";
 
     public Rotate() throws EventSystemException {
         super(NAME, null);
@@ -27,10 +28,16 @@ public class Rotate extends MapEvent {
 
     public Rotate(long timestamp, long numEvents, String filename)
             throws EventSystemException {
+        this(timestamp, numEvents, filename, 0);
+    }
+
+    public Rotate(long timestamp, long numEvents, String filename, long numDropped)
+            throws EventSystemException {
         super(NAME, null);
         setTimestamp(timestamp);
         setNum(numEvents);
         setFilename(filename);
+        setNumDropped(numDropped);
     }
 
     public void setTimestamp(long millis) throws EventSystemException {
@@ -52,6 +59,13 @@ public class Rotate extends MapEvent {
     }
     public String getFilename() throws NoSuchAttributeException {
         return getString(FILENAME);
+    }
+
+    public void setNumDropped(long dropped) {
+        setInt64(DROPPED, dropped);
+    }
+    public long getNumDropped() {
+        return getInt64(DROPPED);
     }
 
     public String toString() {

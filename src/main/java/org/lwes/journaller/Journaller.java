@@ -292,10 +292,13 @@ public class Journaller implements Runnable, JournallerMBean {
      * @throws IOException
      */
     public boolean rotate() throws IOException {
-        synchronized (mutex) {
-            dropCount = 0;
+        if (eventHandler.rotate(dropCount)) {
+            synchronized (mutex) {
+                dropCount = 0;
+            }
+            return true;
         }
-        return eventHandler.rotate();
+        return false;
     }
 
     public boolean isUseGzip() {

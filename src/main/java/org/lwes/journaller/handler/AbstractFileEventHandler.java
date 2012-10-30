@@ -163,6 +163,10 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
         }
     }
 
+    public boolean rotate() throws IOException {
+        return rotate(0);
+    }
+
     /**
      * Rotate the output file when called. It will name the new file based on the
      * server time. If a file already exists for that hour it will append "-1" or
@@ -171,7 +175,7 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
      * @return false if we did NOT rotate the file, true if we did
      * @throws java.io.IOException if there is a problem opening the file.
      */
-    public boolean rotate() throws IOException {
+    public boolean rotate(long dropCount) throws IOException {
         Calendar now = (testTime == null) ? Calendar.getInstance() : testTime;
         long ts = now.getTimeInMillis();
         if (tooSoonToRotate(ts)) {
@@ -203,7 +207,10 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
             swapOutputStream();
             lastRotateTimestamp = ts;
             try {
-                emit(new Rotate(System.currentTimeMillis(), getEventCount(), rotatedFile.getAbsolutePath()));
+                emit(new Rotate(System.currentTimeMillis(),
+                                getEventCount(),
+                                rotatedFile.getAbsolutePath(),
+                                dropCount));
                 setEventCount(0);
             }
             catch (EventSystemException e) {
