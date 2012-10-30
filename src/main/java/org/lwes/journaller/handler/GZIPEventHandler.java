@@ -5,20 +5,20 @@ package org.lwes.journaller.handler;
  * Date: 9/22/2010
  */
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.lwes.journaller.JournallerConstants;
-import org.lwes.journaller.util.EventHandlerUtil;
-import org.lwes.listener.DatagramQueueElement;
-
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.nio.ByteBuffer;
 import java.util.zip.GZIPOutputStream;
+
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.lwes.journaller.JournallerConstants;
+import org.lwes.journaller.util.EventHandlerUtil;
+import org.lwes.listener.DatagramQueueElement;
 
 /**
  * Write events to GzipOuputStream.
@@ -31,22 +31,16 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
     private GZIPOutputStream tmp = null;
     private GZIPOutputStream old = null;
 
-    public GZIPEventHandler() {
-    }
-
     /**
      * Create the Event handler and open the output stream to the file.
      *
-     * @param filePattern Filename pattern to use when creating the file
-     *                    we should be writing to.
      * @throws IOException if there is a problem opening the file for writing.
      */
-    public GZIPEventHandler(String filePattern) throws IOException {
+    public GZIPEventHandler(String filename, String filePattern) throws IOException {
+        setFilename(filename);
         setFilenamePattern(filePattern);
-        String fn = generateFilename();
-        createOutputStream(fn);
+        createOutputStream(filename);
         swapOutputStream();
-        setFilename(fn);
     }
 
     /**
@@ -55,9 +49,7 @@ public class GZIPEventHandler extends AbstractFileEventHandler {
      * @throws IOException if there is a problem opening a handle to the file.
      */
     public void createOutputStream(String filename) throws IOException {
-        File newFile = new File(filename);
-        moveExistingFile(newFile);
-        tmp = new GZIPOutputStream(new FileOutputStream(filename, true));
+        tmp = new GZIPOutputStream(new FileOutputStream(filename, false));
         if (log.isDebugEnabled()) {
             log.debug("Created a new log file: " + getFilename());
         }

@@ -3,9 +3,6 @@ package org.lwes.journaller.util;
  * @author fmaritato
  */
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Calendar;
@@ -13,6 +10,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class FilenameFormatter {
 
@@ -144,10 +144,10 @@ public class FilenameFormatter {
         }
     }
 
-    static class HostnameObject {
+    public static class HostnameObject {
         private char modifier;
 
-        HostnameObject() {
+        public HostnameObject() {
         }
 
         public HostnameObject(char modifier) {

@@ -3,6 +3,13 @@ package org.lwes.journaller.handler;
  * @author fmaritato
  */
 
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.nio.ByteBuffer;
+
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -14,12 +21,6 @@ import org.lwes.journaller.JournallerConstants;
 import org.lwes.journaller.util.EventHandlerUtil;
 import org.lwes.listener.DatagramQueueElement;
 
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.nio.ByteBuffer;
-
 public class SequenceFileHandler extends AbstractFileEventHandler implements JournallerConstants {
 
     private static transient Log log = LogFactory.getLog(SequenceFileHandler.class);
@@ -30,12 +31,11 @@ public class SequenceFileHandler extends AbstractFileEventHandler implements Jou
     private BytesWritable key = new BytesWritable();
     private BytesWritable value = new BytesWritable();
 
-    public SequenceFileHandler(String filePattern) throws IOException {
+    public SequenceFileHandler(String filename, String filePattern) throws IOException {
+        setFilename(filename);
         setFilenamePattern(filePattern);
-        String fn = generateFilename();
-        createOutputStream(fn);
+        createOutputStream(filename);
         swapOutputStream();
-        setFilename(fn);
     }
 
     public void createOutputStream(String filename) throws IOException {

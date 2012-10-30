@@ -4,14 +4,15 @@ package org.lwes.journaller;
  * Date: Apr 22, 2009
  */
 
+import java.io.File;
+import java.util.Calendar;
+import java.util.List;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.Test;
 import org.lwes.Event;
 import org.lwes.journaller.handler.GZIPEventHandler;
-
-import java.io.File;
-import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -29,8 +30,21 @@ public class GZIPEventHandlerTest extends BaseJournallerTest {
     @Test
     public void testHandler() {
         try {
-            GZIPEventHandler handler = new GZIPEventHandler("target/junit-gzip-%tY%tm%td%tH%tM%tS");
-            String generatedFile1 = handler.getFilename();
+            GZIPEventHandler handler = new GZIPEventHandler("target/junit-gzip", "%tY%tm%td%tH%tM%tS");
+
+            Calendar s = Calendar.getInstance();
+            s.set(Calendar.YEAR, 2009);
+            s.set(Calendar.MONTH, Calendar.OCTOBER);
+            s.set(Calendar.DAY_OF_MONTH, 12);
+            s.set(Calendar.HOUR_OF_DAY, 15);
+            s.set(Calendar.MINUTE, 18);
+            handler.setTestTime(s);
+
+            Calendar l = (Calendar) s.clone();
+            l.add(Calendar.MINUTE, -1);
+            handler.setLastRotateTimestamp(l.getTimeInMillis());
+
+            String generatedFile1 = handler.generateRotatedFilename(l, s);
             if (log.isDebugEnabled()) {
                 log.debug("generated file: "+generatedFile1);
             }

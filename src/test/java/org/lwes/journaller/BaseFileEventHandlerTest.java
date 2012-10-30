@@ -6,13 +6,13 @@ package org.lwes.journaller;
  * @author fmaritato
  */
 
+import java.io.IOException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.Test;
 import org.lwes.EventSystemException;
 import org.lwes.journaller.handler.NIOEventHandler;
-
-import java.net.UnknownHostException;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -23,10 +23,10 @@ public class BaseFileEventHandlerTest extends BaseJournallerTest {
 
     @Test
     public void testIsRotateEvent()
-            throws UnknownHostException,
+            throws IOException,
                    EventSystemException {
 
-        NIOEventHandler handler = new NIOEventHandler();
+        NIOEventHandler handler = new NIOEventHandler("target/nio-junit", "%tQ");
         assertTrue(handler.isRotateEvent(createRotateEvent().serialize()));
         assertFalse(handler.isRotateEvent(createTestEvent().getPacket().getData()));
     }

@@ -5,16 +5,17 @@ package org.lwes.journaller;
  * Date: Apr 22, 2009
  */
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Calendar;
+import java.util.List;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.Test;
 import org.lwes.Event;
 import org.lwes.EventSystemException;
 import org.lwes.journaller.handler.NIOEventHandler;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -27,7 +28,7 @@ public class NIOEventHandlerTest extends BaseJournallerTest {
     public void testDatagramPacket()
             throws IOException, EventSystemException {
 
-        NIOEventHandler handler = new NIOEventHandler("target/junit-nio-%tH%tM%tS");
+        NIOEventHandler handler = new NIOEventHandler("target/junit-nio", "%tH%tM%tS");
         String generatedFile1 = handler.getFilename();
         for (int i = 0; i < 10; i++) {
             handler.handleEvent(createTestEvent());
@@ -58,8 +59,21 @@ public class NIOEventHandlerTest extends BaseJournallerTest {
     @Test
     public void testHandler() throws IOException, EventSystemException {
 
-        NIOEventHandler handler = new NIOEventHandler("target/junit-nio-%tH%tM%tS");
-        String generatedFile1 = handler.getFilename();
+        NIOEventHandler handler = new NIOEventHandler("target/junit-nio", "%tH%tM%tS");
+
+        Calendar s = Calendar.getInstance();
+        s.set(Calendar.YEAR, 2009);
+        s.set(Calendar.MONTH, Calendar.OCTOBER);
+        s.set(Calendar.DAY_OF_MONTH, 12);
+        s.set(Calendar.HOUR_OF_DAY, 15);
+        s.set(Calendar.MINUTE, 18);
+        handler.setTestTime(s);
+
+        Calendar l = (Calendar) s.clone();
+        l.add(Calendar.MINUTE, -1);
+        handler.setLastRotateTimestamp(l.getTimeInMillis());
+
+        String generatedFile1 = handler.generateRotatedFilename(l, s);
         for (int i = 0; i < 10; i++) {
             handler.handleEvent(createTestEvent());
         }
@@ -77,8 +91,8 @@ public class NIOEventHandlerTest extends BaseJournallerTest {
         List<Event> eventList = mdj.getEventList();
         assertNotNull("Event list was null", eventList);
         if (log.isDebugEnabled()) {
-            for (Event e : eventList) {
-                log.debug(e);
+            for (Event evt : eventList) {
+                log.debug(evt);
             }
         }
         assertEquals("Number of events is wrong", 10, eventList.size());

@@ -38,10 +38,10 @@ public class Journaller implements Runnable, JournallerMBean {
     private static transient Log log = LogFactory.getLog(Journaller.class);
 
     @Option(name = "-f", aliases = "--file", usage = "File to log to")
-    private String fileName;
+    private String fileName = "all_events.log";
 
     @Option(name = "-l", aliases = "--file-pattern", usage = "Pattern to use for file name generation")
-    private String filePattern = "%tY%tm%td%tH%tM-%h";
+    private String filePattern = "%tY%tm%td%tH%tM";
 
     @Option(name = "-a", aliases = "--address", usage = "Unicast or multicast address to listen on")
     private String address = "224.1.1.11";
@@ -84,15 +84,14 @@ public class Journaller implements Runnable, JournallerMBean {
     }
 
     public void initialize() throws EventSystemException, IOException {
-        String arg = getFileName() == null ? getFilePattern() : getFileName();
         if (useGzip) {
-            eventHandler = new GZIPEventHandler(arg);
+            eventHandler = new GZIPEventHandler(fileName, filePattern);
         }
         else if (useSequence) {
-            eventHandler = new SequenceFileHandler(arg);
+            eventHandler = new SequenceFileHandler(fileName, filePattern);
         }
         else {
-            eventHandler = new NIOEventHandler(arg);
+            eventHandler = new NIOEventHandler(fileName, filePattern);
         }
 
         mbs = ManagementFactory.getPlatformMBeanServer();

@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Calendar;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -31,7 +32,8 @@ public class SequenceFileHandlerTest extends TestCase {
      * and contain the fields that the journaller should be inserting.
      */
     public void testHandler() throws IOException, EventSystemException {
-        SequenceFileHandler handler = new SequenceFileHandler("target/junit-seq1-%tY%tm%td%tH%tM%tS%tL");
+        SequenceFileHandler handler = new SequenceFileHandler("target/junit-seq1", "%tY%tm%td%tH%tM%tS%tL");
+
         String generatedFile1 = handler.getFilename();
         if (log.isDebugEnabled()) {
             log.debug("generated file: " + generatedFile1);
@@ -48,11 +50,25 @@ public class SequenceFileHandlerTest extends TestCase {
     }
 
     public void testRotation() throws IOException, EventSystemException, InterruptedException {
-        SequenceFileHandler handler = new SequenceFileHandler("target/junit-seq2-%tY%tm%td%tH%tM%tS%tL");
-        String generatedFile1 = handler.getFilename();
+        SequenceFileHandler handler = new SequenceFileHandler("target/junit-seq2", "%tY%tm%td%tH%tM%tS%tL");
+
+        Calendar s = Calendar.getInstance();
+        s.set(Calendar.YEAR, 2009);
+        s.set(Calendar.MONTH, Calendar.OCTOBER);
+        s.set(Calendar.DAY_OF_MONTH, 12);
+        s.set(Calendar.HOUR_OF_DAY, 15);
+        s.set(Calendar.MINUTE, 18);
+        handler.setTestTime(s);
+
+        Calendar l = (Calendar) s.clone();
+        l.add(Calendar.MINUTE, -1);
+        handler.setLastRotateTimestamp(l.getTimeInMillis());
+
+        String generatedFile1 = handler.generateRotatedFilename(l, s);
         if (log.isDebugEnabled()) {
             log.debug("generated file: " + generatedFile1);
         }
+
         handler.handleEvent(createTestEvent());
         handler.handleEvent(createTestEvent());
         Thread.sleep(1000);
@@ -80,7 +96,7 @@ public class SequenceFileHandlerTest extends TestCase {
     }
 
     private void verifyEvents(MockSequenceDeJournaller mdj)
-        throws NoSuchAttributeException, UnknownHostException {
+            throws NoSuchAttributeException, UnknownHostException {
 
         List<Event> eventList = mdj.getEventList();
         assertNotNull("Event list was null", eventList);
@@ -95,8 +111,8 @@ public class SequenceFileHandlerTest extends TestCase {
     }
 
     private DatagramQueueElement createTestEvent()
-        throws EventSystemException,
-               UnknownHostException {
+            throws EventSystemException,
+                   UnknownHostException {
 
         EventTemplateDB evtDb = new EventTemplateDB();
         evtDb.initialize();

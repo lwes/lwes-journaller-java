@@ -142,12 +142,14 @@
     </dependencies>
 
     <build>
+        <!--
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
             </resource>
         </resources>
+        -->
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -282,7 +284,7 @@
                             <directoryIncluded>false</directoryIncluded>
                             <sources>
                                 <source>
-                                    <location>target/classes/log4j.xml</location>
+                                    <location>src/conf/log4j.xml</location>
                                 </source>
                             </sources>
                         </mapping>

@@ -3,19 +3,20 @@ package org.lwes.journaller.handler;
  * @author fmaritato
  */
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.lwes.journaller.DeJournaller;
-import org.lwes.journaller.util.EventHandlerUtil;
-import org.lwes.listener.DatagramQueueElement;
-
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.lwes.journaller.DeJournaller;
+import org.lwes.journaller.util.EventHandlerUtil;
+import org.lwes.listener.DatagramQueueElement;
 
 public class NIOEventHandler extends AbstractFileEventHandler {
 
@@ -32,15 +33,12 @@ public class NIOEventHandler extends AbstractFileEventHandler {
     private ByteBuffer headerBuffer = ByteBuffer.allocateDirect(DeJournaller.MAX_HEADER_SIZE);
     private ByteBuffer bodyBuffer = ByteBuffer.allocateDirect(DeJournaller.MAX_BODY_SIZE);
 
-    public NIOEventHandler() {
-    }
 
-    public NIOEventHandler(String filePattern) throws IOException {
+    public NIOEventHandler(String filename, String filePattern) throws IOException {
+        setFilename(filename);
         setFilenamePattern(filePattern);
-        String fn = generateFilename();
-        createOutputStream(fn);
+        createOutputStream(filename);
         swapOutputStream();
-        setFilename(fn);
 
         headerBuffer.clear();
         bodyBuffer.clear();

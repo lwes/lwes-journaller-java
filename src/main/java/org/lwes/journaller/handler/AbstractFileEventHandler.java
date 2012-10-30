@@ -3,6 +3,14 @@ package org.lwes.journaller.handler;
  * @author fmaritato
  */
 
+import java.io.File;
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.util.Calendar;
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lwes.Event;
@@ -11,15 +19,6 @@ import org.lwes.journaller.event.Health;
 import org.lwes.journaller.event.Rotate;
 import org.lwes.journaller.util.FilenameFormatter;
 import org.lwes.listener.DatagramQueueElement;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.InetAddress;
-import java.net.MulticastSocket;
-import java.net.DatagramSocket;
-import java.util.Calendar;
-import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class AbstractFileEventHandler implements DatagramQueueElementHandler {
 
@@ -31,8 +30,9 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
     private String filenamePattern;
 
     private int siteId = 0;
-    private long rotateGracePeriod = 1000 * 30; // 30 seconds
-    protected long lastRotateTimestamp = 0;
+    private long rotateGracePeriod = 1000;
+    protected long lastRotateTimestamp = System.currentTimeMillis();
+
     private static final byte[] ROTATE = "Command::Rotate".getBytes();
     private static final byte[] JOURNALLER = "Journaller::".getBytes();
 
@@ -45,37 +45,9 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
     private int healthInterval = 60;
     private long lastHealthTime = System.currentTimeMillis();
 
-    protected final Object lock = new Object();
+    private Calendar testTime;
 
-    /**
-     * This method checks if the filename we want to use already exists. If it does
-     * we move it to a different name to avoid clobbering data we may want to keep.
-     *
-     * @param newFile the proposed new file object.
-     */
-    public void moveExistingFile(File newFile) {
-        if (newFile.exists()) {
-            if (log.isDebugEnabled()) {
-                log.debug(newFile.getAbsolutePath() + " exists. Renaming");
-            }
-            Calendar c = Calendar.getInstance();
-            // TODO I don't like this...
-            StringBuilder buf = new StringBuilder()
-                .append(c.get(Calendar.YEAR)).append(c.get(Calendar.MONTH))
-                .append(c.get(Calendar.DAY_OF_MONTH)).append(c.get(Calendar.HOUR_OF_DAY))
-                .append(c.get(Calendar.MINUTE))
-                .append(getFilename());
-            boolean succeeded = newFile.renameTo(new File(buf.toString()));
-            if (!succeeded) {
-                log.error("File rename failed. " + newFile.getAbsolutePath());
-            }
-            else {
-                if (log.isDebugEnabled()) {
-                    log.debug("Renamed file to: " + newFile.getAbsolutePath());
-                }
-            }
-        }
-    }
+    protected final Object lock = new Object();
 
     public void setFilename(String filename) {
         this.filename = filename;
@@ -85,20 +57,28 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
         return filename;
     }
 
-    public String generateFilename() {
-        return generateFilename(null);
+    public Calendar getTestTime() {
+        return testTime;
     }
 
-    public String generateFilename(Calendar c) {
-        String fn = formatter.format(filenamePattern, c);
-        if (getFileExtension() != null &&
-            !fn.endsWith(getFileExtension())) {
-            fn += getFileExtension();
-        }
-        if (log.isDebugEnabled()) {
-            log.debug("Generated a new filename: " + fn);
-        }
-        return fn;
+    public void setTestTime(Calendar testTime) {
+        this.testTime = testTime;
+    }
+
+    public long getLastRotateTimestamp() {
+        return lastRotateTimestamp;
+    }
+
+    public void setLastRotateTimestamp(long lastRotateTimestamp) {
+        this.lastRotateTimestamp = lastRotateTimestamp;
+    }
+
+    public String generateRotatedFilename(Calendar start, Calendar end) {
+        return getFilename() + "." +
+               formatter.format(getFilenamePattern(), start) + "." +
+               formatter.format(getFilenamePattern(), end) + "." +
+               new FilenameFormatter.HostnameObject().toString() +
+               getFileExtension();
     }
 
     public boolean isJournallerEvent(byte[] bytes) {
@@ -192,11 +172,9 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
      * @throws java.io.IOException if there is a problem opening the file.
      */
     public boolean rotate() throws IOException {
-        long ts = System.currentTimeMillis();
+        Calendar now = (testTime == null) ? Calendar.getInstance() : testTime;
+        long ts = now.getTimeInMillis();
         if (tooSoonToRotate(ts)) {
-            if (log.isDebugEnabled()) {
-                log.debug("Too soon to rotate.");
-            }
             return false;
         }
 
@@ -205,16 +183,27 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
             log.debug("oldfile: " + oldfile);
         }
 
-        String newFilename = generateFilename();
-        createOutputStream(newFilename);
+        Calendar start = Calendar.getInstance();
+        start.setTimeInMillis(lastRotateTimestamp);
+
+        File currentFile = new File(getFilename());
+        File rotatedFile = new File(generateRotatedFilename(start, now));
+        if (log.isDebugEnabled()) {
+            log.debug("Moving file: " + currentFile + " to " + rotatedFile);
+        }
+        boolean succeeded = currentFile.renameTo(rotatedFile);
+        if (!succeeded) {
+            log.error("Could not rename file " + currentFile + " to " + rotatedFile);
+            return false;
+        }
+        createOutputStream(getFilename());
 
         // Sync on the close and reopen of the file and counting the number of events.
         synchronized (lock) {
             swapOutputStream();
-            this.filename = newFilename;
             lastRotateTimestamp = ts;
             try {
-                emit(new Rotate(System.currentTimeMillis(), getEventCount(), oldfile));
+                emit(new Rotate(System.currentTimeMillis(), getEventCount(), rotatedFile.getAbsolutePath()));
                 setEventCount(0);
             }
             catch (EventSystemException e) {
