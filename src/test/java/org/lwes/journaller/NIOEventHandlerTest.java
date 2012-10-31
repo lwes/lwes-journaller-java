@@ -7,7 +7,6 @@ package org.lwes.journaller;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Calendar;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -60,20 +59,10 @@ public class NIOEventHandlerTest extends BaseJournallerTest {
     public void testHandler() throws IOException, EventSystemException {
 
         NIOEventHandler handler = new NIOEventHandler("target/junit-nio", "%tH%tM%tS");
+        handler.setTestTime(start);
+        handler.setLastRotateTimestamp(last.getTimeInMillis());
 
-        Calendar s = Calendar.getInstance();
-        s.set(Calendar.YEAR, 2009);
-        s.set(Calendar.MONTH, Calendar.OCTOBER);
-        s.set(Calendar.DAY_OF_MONTH, 12);
-        s.set(Calendar.HOUR_OF_DAY, 15);
-        s.set(Calendar.MINUTE, 18);
-        handler.setTestTime(s);
-
-        Calendar l = (Calendar) s.clone();
-        l.add(Calendar.MINUTE, -1);
-        handler.setLastRotateTimestamp(l.getTimeInMillis());
-
-        String generatedFile1 = handler.generateRotatedFilename(l, s);
+        String generatedFile1 = handler.generateRotatedFilename(last, start);
         for (int i = 0; i < 10; i++) {
             handler.handleEvent(createTestEvent());
         }
@@ -101,7 +90,7 @@ public class NIOEventHandlerTest extends BaseJournallerTest {
             assertTrue(f.delete());
         }
 
-        String generatedFile2 = handler.getFilename();
+        String generatedFile2 = handler.generateRotatedFilename(start, start);
         for (int i = 0; i < 10; i++) {
             handler.handleEvent(createTestEvent());
         }

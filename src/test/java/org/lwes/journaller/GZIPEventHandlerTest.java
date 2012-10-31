@@ -5,7 +5,6 @@ package org.lwes.journaller;
  */
 
 import java.io.File;
-import java.util.Calendar;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -30,21 +29,12 @@ public class GZIPEventHandlerTest extends BaseJournallerTest {
     @Test
     public void testHandler() {
         try {
-            GZIPEventHandler handler = new GZIPEventHandler("target/junit-gzip", "%tY%tm%td%tH%tM%tS");
+            GZIPEventHandler handler = new GZIPEventHandler("target/junit-gzip",
+                                                            "%tY%tm%td%tH%tM%tS");
+            handler.setTestTime(start);
+            handler.setLastRotateTimestamp(last.getTimeInMillis());
 
-            Calendar s = Calendar.getInstance();
-            s.set(Calendar.YEAR, 2009);
-            s.set(Calendar.MONTH, Calendar.OCTOBER);
-            s.set(Calendar.DAY_OF_MONTH, 12);
-            s.set(Calendar.HOUR_OF_DAY, 15);
-            s.set(Calendar.MINUTE, 18);
-            handler.setTestTime(s);
-
-            Calendar l = (Calendar) s.clone();
-            l.add(Calendar.MINUTE, -1);
-            handler.setLastRotateTimestamp(l.getTimeInMillis());
-
-            String generatedFile1 = handler.generateRotatedFilename(l, s);
+            String generatedFile1 = handler.generateRotatedFilename(last, start);
             if (log.isDebugEnabled()) {
                 log.debug("generated file: "+generatedFile1);
             }
@@ -62,7 +52,7 @@ public class GZIPEventHandlerTest extends BaseJournallerTest {
             assertNotNull("Event list was null", eventList);
             assertEquals("Number of events is wrong", 10, eventList.size());
 
-            String generatedFile2 = handler.getFilename();
+            String generatedFile2 = handler.generateRotatedFilename(start, start);
             for (int i = 0; i < 10; i++) {
                 handler.handleEvent(createTestEvent());
             }
