@@ -157,10 +157,36 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
                 swapOutputStream();
             }
             closeOutputStream();
+
+            // Rename file so that when we start up we don't overwrite it.
+            renameFile();
         }
         catch (IOException e) {
             log.error(e.getMessage(), e);
         }
+    }
+
+    /**
+     * Renames the current file being logged to be the rotated file name.
+     *
+     * @return File object pointing to the generated rotated file
+     */
+    protected File renameFile() {
+        Calendar now = (testTime == null) ? Calendar.getInstance() : testTime;
+        Calendar start = Calendar.getInstance();
+        start.setTimeInMillis(lastRotateTimestamp);
+
+        File currentFile = new File(getFilename());
+        File rotatedFile = new File(generateRotatedFilename(start, now));
+        if (log.isDebugEnabled()) {
+            log.debug("Moving file: " + currentFile + " to " + rotatedFile);
+        }
+        boolean succeeded = currentFile.renameTo(rotatedFile);
+        if (!succeeded) {
+            log.error("Could not rename file " + currentFile + " to " + rotatedFile);
+            return null;
+        }
+        return rotatedFile;
     }
 
     public boolean rotate() throws IOException {
@@ -187,17 +213,8 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
             log.debug("oldfile: " + oldfile);
         }
 
-        Calendar start = Calendar.getInstance();
-        start.setTimeInMillis(lastRotateTimestamp);
-
-        File currentFile = new File(getFilename());
-        File rotatedFile = new File(generateRotatedFilename(start, now));
-        if (log.isDebugEnabled()) {
-            log.debug("Moving file: " + currentFile + " to " + rotatedFile);
-        }
-        boolean succeeded = currentFile.renameTo(rotatedFile);
-        if (!succeeded) {
-            log.error("Could not rename file " + currentFile + " to " + rotatedFile);
+        File rotatedFile = renameFile();
+        if (rotatedFile == null) {
             return false;
         }
         createOutputStream(getFilename());
@@ -219,7 +236,6 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
         }
 
         closeOutputStream();
-
         return true;
     }
 
