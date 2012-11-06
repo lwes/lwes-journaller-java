@@ -9,7 +9,6 @@ import java.util.Calendar;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.Test;
-import org.lwes.journaller.util.FilenameFormatter;
 
 import static org.junit.Assert.assertEquals;
 
@@ -32,8 +31,7 @@ public class FileEventHandlerTest {
         MockFileEventHandler m = new MockFileEventHandler();
         m.setFilename("all_events.log");
         m.setFilenamePattern("%tY%tm%td%tH%tM");
-        String hostname = new FilenameFormatter.HostnameObject().toString();
 
-        assertEquals("all_events.log.200910121518.200910121519."+hostname+".mock", m.generateRotatedFilename(s, e));
+        assertEquals("all_events.log.200910121518.200910121519.mock", m.generateRotatedFilename(s, e));
     }
 }

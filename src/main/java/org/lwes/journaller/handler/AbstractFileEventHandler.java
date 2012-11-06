@@ -76,8 +76,7 @@ public abstract class AbstractFileEventHandler implements DatagramQueueElementHa
     public String generateRotatedFilename(Calendar start, Calendar end) {
         return getFilename() + "." +
                formatter.format(getFilenamePattern(), start) + "." +
-               formatter.format(getFilenamePattern(), end) + "." +
-               new FilenameFormatter.HostnameObject().toString() +
+               formatter.format(getFilenamePattern(), end) +
                getFileExtension();
     }
 
