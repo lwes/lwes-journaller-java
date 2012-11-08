@@ -15,7 +15,7 @@ do
     CP=${CP}:${jar}
   fi
 done
-CP=${CP}:${bin}/config
+CP=${CP}:${bin}/conf
 
 $JAVA_HOME/bin/java \
 -Dlog4j.configuration=log4j.xml \
