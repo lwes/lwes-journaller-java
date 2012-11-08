@@ -241,63 +241,86 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>rpm-maven-plugin</artifactId>
-                <version>2.1-alpha-1</version>
-                <configuration>
-                    <summary>LWES Journaller, java implementation</summary>
-                    <group>Org/Lwes</group>
-                    <requires>
-                        <require>jdk &gt;= 1.6.0</require>
-                    </requires>
-                    <mappings>
-                        <mapping>
-                            <directory>${lwes.journaller.home}/bin</directory>
-                            <filemode>755</filemode>
-                            <username>root</username>
-                            <groupname>root</groupname>
-                            <sources>
-                                <source>
-                                    <location>src/bin</location>
-                                </source>
-                            </sources>
-                        </mapping>
-                        <mapping>
-                            <directory>${lwes.journaller.home}/lib</directory>
-                            <filemode>644</filemode>
-                            <username>root</username>
-                            <groupname>root</groupname>
-                            <directoryIncluded>false</directoryIncluded>
-                            <artifact>
-                                <classifiers>
-                                    <classifier>with-deps</classifier>
-                                </classifiers>
-                            </artifact>
-                        </mapping>
-                        <mapping>
-                            <directory>${lwes.journaller.home}/conf</directory>
-                            <filemode>644</filemode>
-                            <username>root</username>
-                            <groupname>root</groupname>
-                            <directoryIncluded>false</directoryIncluded>
-                            <sources>
-                                <source>
-                                    <location>src/conf/log4j.xml</location>
-                                </source>
-                            </sources>
-                        </mapping>
-                        <mapping>
-                            <directory>/var/log/lwes-journaller</directory>
-                            <filemode>755</filemode>
-                            <username>root</username>
-                            <groupname>root</groupname>
-                        </mapping>
-                    </mappings>
-                </configuration>
-            </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <activation>
+                <os>
+                    <family>linux</family>
+                </os>
+            </activation>
+            <id>rpmbuild</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>rpm-maven-plugin</artifactId>
+                        <version>2.1-alpha-1</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>attached-rpm</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <summary>LWES Journaller, java implementation</summary>
+                            <group>Org/Lwes</group>
+                            <requires>
+                                <require>jdk &gt;= 1.6.0</require>
+                            </requires>
+                            <mappings>
+                                <mapping>
+                                    <directory>${lwes.journaller.home}/bin</directory>
+                                    <filemode>755</filemode>
+                                    <username>root</username>
+                                    <groupname>root</groupname>
+                                    <sources>
+                                        <source>
+                                            <location>src/bin</location>
+                                        </source>
+                                    </sources>
+                                </mapping>
+                                <mapping>
+                                    <directory>${lwes.journaller.home}/lib</directory>
+                                    <filemode>644</filemode>
+                                    <username>root</username>
+                                    <groupname>root</groupname>
+                                    <directoryIncluded>false</directoryIncluded>
+                                    <artifact>
+                                        <classifiers>
+                                            <classifier>with-deps</classifier>
+                                        </classifiers>
+                                    </artifact>
+                                </mapping>
+                                <mapping>
+                                    <directory>${lwes.journaller.home}/conf</directory>
+                                    <filemode>644</filemode>
+                                    <username>root</username>
+                                    <groupname>root</groupname>
+                                    <directoryIncluded>false</directoryIncluded>
+                                    <sources>
+                                        <source>
+                                            <location>src/conf/log4j.xml</location>
+                                        </source>
+                                    </sources>
+                                </mapping>
+                                <mapping>
+                                    <directory>/var/log/lwes-journaller</directory>
+                                    <filemode>755</filemode>
+                                    <username>root</username>
+                                    <groupname>root</groupname>
+                                </mapping>
+                            </mappings>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
     <repositories>
         <repository>
             <id>central</id>
