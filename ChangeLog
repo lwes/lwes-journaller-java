@@ -1,3 +1,11 @@
+* Thu Nov  8 12:18:22 PST 2012 Frank Maritato <frank.maritato@openx.com> 1.1.1
+* Mostly changed file name format and rotation. Filename command line switch
+will now be the filename while writing, i.e. all_events.log.seq. When the file
+is rotated, it will become all_events.log.yyyyMMddHHmm.yyyyMMddHHmm.seq, where
+the first time stamp is the start time and the second is the end time.
+* Unicast support added. Command line switches changed to be more generic.
+* Added the number of dropped events to the rotate event.
+
 === 1.0.2 ===
 * Check if the queue has capacity before trying to add to it to avoid IllegalStateException.
 * Rotate the file differently to minimize the amount of time blocked in synchronize.
