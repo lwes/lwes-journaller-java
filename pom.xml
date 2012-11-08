@@ -12,7 +12,7 @@
     <groupId>org.lwes</groupId>
     <artifactId>lwes-journaller-java</artifactId>
     <packaging>jar</packaging>
-    <version>1.1.1-SNAPSHOT</version>
+    <version>1.1.1</version>
     <name>lwes-journaller-java</name>
     <description>An LWES Journaller written in Java</description>
     <url>http://lwes.org</url>
@@ -37,7 +37,7 @@
         <connection>scm:git:git@github.com:lwes/lwes-journaller-java.git</connection>
         <developerConnection>scm:git:git@github.com:lwes/lwes-journaller-java.git</developerConnection>
         <url>https://github.com/lwes/lwes-journaller-java</url>
-      <tag>HEAD</tag>
+      <tag>lwes-journaller-java-1.1.1</tag>
   </scm>
 
     <developers>
