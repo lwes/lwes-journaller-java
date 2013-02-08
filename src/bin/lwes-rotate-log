@@ -5,8 +5,7 @@ bin=`dirname "$0"`/..
 bin=`cd "$bin"; pwd`
 
 ##
-# This script calls the TestEmitter to emit a Command::Rotate event that tell the journallers
-# to rotate their log files.
+# Calls JMX function to rotate log files.
 ##
 for jar in ${bin}/lib/*.jar
 do
@@ -16,7 +15,7 @@ do
     CP=${CP}:${jar}
   fi
 done
-CP=${CP}:${bin}/config
+CP=${CP}:${bin}/conf
 
 $JAVA_HOME/bin/java \
 -Dcom.sun.management.jmxremote.authenticate=false \
