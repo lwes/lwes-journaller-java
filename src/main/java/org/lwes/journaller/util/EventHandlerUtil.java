@@ -42,10 +42,14 @@ public class EventHandlerUtil implements JournallerConstants {
 
         byte[] unused = new byte[4];
         byte[] shortBuf = new byte[2];
+        final byte[] ipBytes = ip.getAddress();
         Serializer.serializeUINT16(length, shortBuf, 0);
         buf.put(shortBuf)
                 .putLong(time)
-                .put(ip.getAddress());
+                .put(ipBytes[3])
+                .put(ipBytes[2])
+                .put(ipBytes[1])
+                .put(ipBytes[0]);
         Serializer.serializeUINT16(port, shortBuf, 0);
         buf.put(shortBuf);
         Serializer.serializeUINT16(siteId, shortBuf, 0);
@@ -57,7 +61,7 @@ public class EventHandlerUtil implements JournallerConstants {
      * The header is [length][time][host][port][site][unused]
      * [length] is uint16  -- 2
      * [time] is int64 -- 8
-     * [host] is 4 byte ip address -- 4
+     * [host] is 4 byte ip address -- 4 (little-endian)
      * [port] is uint16 -- 2
      * [site] is uint16 -- 2
      * [unused] is uint32 -- 4
@@ -124,8 +128,12 @@ public class EventHandlerUtil implements JournallerConstants {
 
         time = buf.getLong();
 
+        // IP addresses are, unfortunately, stored little-endian under LWES.
         byte[] ipbytes = new byte[4];
-        buf.get(ipbytes);
+        ipbytes[3] = buf.get();
+        ipbytes[2] = buf.get();
+        ipbytes[1] = buf.get();
+        ipbytes[0] = buf.get();
         InetAddress ip = InetAddress.getByAddress(ipbytes);
 
         state.reset();
@@ -193,7 +201,10 @@ public class EventHandlerUtil implements JournallerConstants {
         time = buf.getLong();
 
         byte[] ipbytes = new byte[4];
-        buf.get(ipbytes);
+        ipbytes[3] = buf.get();
+        ipbytes[2] = buf.get();
+        ipbytes[1] = buf.get();
+        ipbytes[0] = buf.get();
         InetAddress ip = InetAddress.getByAddress(ipbytes);
 
         state.reset();
